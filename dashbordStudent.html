@@ -1,0 +1,1814 @@
+// js/tools/textHtmlBox.js
+import { state,setCursor, pushEvent } from "../core/state.js";
+import { redraw,createFixedTextHtmlBoxAtPointer } from "../core/render.js";
+
+const PADDING = 5;
+let __warnOnce = { html: 0, rplay: 0 };
+
+let bound = false;
+let handlers = null;
+let startAngle = 0;
+
+let toolActive = false;
+let isDragging = false;
+let start = null;
+let tempRect = null;
+let count=0;
+let activeEditor = null;   // { el, objId }
+let savedRange = null;
+let dragTarget = null;
+let dragStart = null;
+let dragStartObj = null;
+ let canvasRef = null;
+let ignoreSelectionChange = false;
+const LEFT_GUTTER_PCT = 1.4;  
+const DEFAULT_FONT = "Tahoma";
+function getPointerPos(canvas, e) {
+  const rect = canvas.getBoundingClientRect();
+  const xCss = (e.clientX - rect.left);
+  const yCss = (e.clientY - rect.top);
+  return { xCss, yCss, rect };
+}
+
+function warnThrottle(key, msg, err){
+  const now = performance.now();
+  if (now - (__warnOnce[key] || 0) < 2000) return; // مرة كل ثانيتين
+  __warnOnce[key] = now;
+  console.warn(msg, err);
+}
+
+function detectDir(text) {
+  const t = (text || "").trim();
+  for (const ch of t) {
+    if (/[؀-ۿ]/.test(ch)) return "rtl";
+    if (/[A-Za-z]/.test(ch)) return "ltr";
+  }
+  return "rtl";
+}
+
+function saveSelection() {
+  const sel = window.getSelection();
+  if (!sel || sel.rangeCount === 0) return;
+  savedRange = sel.getRangeAt(0);
+}
+function restoreSelection() {
+  if (!savedRange) return;
+  const sel = window.getSelection();
+  if (!sel) return;
+  sel.removeAllRanges();
+  sel.addRange(savedRange);
+}
+
+/* =========================
+   HTML -> Image (SVG foreignObject)
+========================= */
+async function htmlToImage(html, w, h, base) {
+  const dir = base.dir || "rtl";
+  const align = base.align || (dir === "rtl" ? "right" : "left");
+
+// const body = (html || "").trim();
+const body = cleanHtmlForSvg(html);
+
+// const wrapped = `<div xmlns="http://www.w3.org/1999/xhtml"
+// style="
+// width:${w}px;height:${h}px;
+// box-sizing:border-box;
+// padding:${PADDING}px;
+// padding-left: calc(${LEFT_GUTTER_PCT}% + ${PADDING}px);
+// font-family:${base.fontFamily};
+// font-size:${base.fontSize}px;
+// direction:${dir};
+// font-family:'MyArabic';
+
+// text-align:${align};
+// unicode-bidi:isolate;
+
+// white-space:pre-wrap;
+// overflow-wrap:break-word;
+// word-break:break-word;
+
+  
+
+// line-height:1.3;
+// color:${base.color || "#000"};
+// ">${body}</div>`;
+const INDENT_RATIO = 0.12;
+const indentPx = Math.round(w * INDENT_RATIO);
+
+const wrapped = `<div xmlns="http://www.w3.org/1999/xhtml"
+style="
+width:${w}px;height:${h}px;
+box-sizing:border-box;
+padding:${PADDING}px;
+padding-left:${indentPx}px;
+font-family:'MyArabic';
+font-size:${base.fontSize}px;
+direction:${dir};
+text-align:${align};
+unicode-bidi:isolate;
+white-space:pre-wrap;
+overflow-wrap:break-word;
+word-break:break-word;
+line-height:1.3;
+color:${base.color || "#000"};
+">${body}</div>`;
+  const svg =
+`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">
+  <foreignObject width="100%" height="100%">
+    ${wrapped}
+  </foreignObject>
+</svg>`;
+
+  const blob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+    const img = new Image();
+  img.decoding = "async";
+  img.crossOrigin = "anonymous";
+
+  await new Promise((res, rej) => {
+    img.onload = () => res();
+    img.onerror = (e) => rej(e);
+    img.src = url;
+  });
+
+  URL.revokeObjectURL(url);
+  return img;
+}
+
+function sanitizePdfHtml(el){
+
+  // نحول كل شيء إلى نص فقط
+  const text = el.innerText || "";
+
+  const lines = text.split(/\n/);
+
+  return lines.map(line => {
+    if (!line.trim()) return "<div><br/></div>";
+    return `<div>${escapeHtml(line)}</div>`;
+  }).join("");
+}
+ 
+export async function ensureTextHtmlCache(obj) {
+  if (!obj) return;
+  if (state.transform.active && obj._cacheImg) return;
+  if (obj._loadingImage) return;
+    const meta = obj.meta || {};
+if (obj._freezeWrap && obj._cacheImg) {
+  return;   // استخدم نفس الكاش بدون re-wrap
+}
+  const canvas = state.canvas;
+  if (!canvas) return;
+
+  const rect = canvas.getBoundingClientRect();
+  const cssW = rect.width;
+  const cssH = rect.height;
+
+  const wCss = Math.max(1, obj.nw * cssW);
+  const hCss = Math.max(1, obj.nh * cssH);
+
+
+  const html = meta.html || "";
+  const dir = meta.dir || detectDir(html);
+
+  const cacheKey =
+     `${wCss.toFixed(2)}x${hCss.toFixed(2)}|` +
+    `${meta.fontFamily || "MyArabic"}|${meta.fontSize || 22}|${meta.color || "#000"}|` +
+    `${dir}|` + (meta.html || "");
+
+  if (obj._cacheKey === cacheKey && obj._cacheImg) return;
+
+  // ✅ منع تكرار نفس العملية
+  if (obj._cachePromise && obj._cachePromiseKey === cacheKey) return obj._cachePromise;
+
+  const base = {
+    dir,
+    align: dir === "rtl" ? "right" : "left",
+    // fontFamily: "MyArabic",
+    fontFamily: DEFAULT_FONT,
+    fontSize: meta.fontSize || 22,
+    color: meta.color || "#000000",
+  };
+
+  obj._loadingImage = true;
+  obj._cachePromiseKey = cacheKey;
+
+  obj._cachePromise = (async () => {
+    try {
+      const img = await htmlToImage(meta.html || "", wCss, hCss, base);
+      obj._cacheImg = img;
+      obj._cacheKey = cacheKey;
+      obj._forceCanvasText = false;
+    } catch (err) {
+      warnThrottle("html", "htmlToImage failed → fallback canvas", err);
+
+      obj._forceCanvasText = true;
+      const fallbackImg = await plainTextToImage(meta.html || "", wCss, hCss, base);
+      obj._cacheImg = fallbackImg;
+      obj._cacheKey = cacheKey;
+    }
+  })().finally(() => {
+    obj._cachePromise = null;
+    obj._cachePromiseKey = null;
+    obj._loadingImage = false;
+    redraw();
+  });
+
+  return obj._cachePromise;
+}
+function normalizeEditorDom(el){
+
+  const nodes = Array.from(el.childNodes);
+
+  if (!nodes.length) return;
+
+  nodes.forEach(node => {
+
+    // TEXT مباشرة داخل editor
+    if (node.nodeType === Node.TEXT_NODE) {
+
+      const text = node.textContent.trim();
+
+      if (!text) {
+        node.remove();
+        return;
+      }
+
+      const div = document.createElement("div");
+      div.textContent = text;
+      el.replaceChild(div, node);
+      return;
+    }
+
+    // BR مباشر
+    if (node.nodeName === "BR") {
+      const div = document.createElement("div");
+      div.appendChild(document.createElement("br"));
+      el.replaceChild(div, node);
+    }
+  });
+
+}
+function cleanHtmlForSvg(html){
+
+  if (!html) return "";
+
+  // إزالة عناصر خطيرة
+  html = html
+    .replace(/<meta[^>]*>/gi, "")
+    .replace(/<link[^>]*>/gi, "")
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
+    .replace(/<o:p[^>]*>[\s\S]*?<\/o:p>/gi, "")
+    .replace(/<!--[\s\S]*?-->/g, "");
+
+  // إزالة attributes مكسّرة
+html = keepSafeStylesOnly(html);
+  html = html.replace(/ class="[^"]*"/gi, "");
+
+  // تحويل br الغريبة
+  html = html.replace(/<br[^>]*>/gi, "<br/>");
+
+  return html;
+}
+export async function ensureTextHtmlCacheView(obj) {
+
+  const canvas = state.canvas;
+  if (!canvas) return;
+
+  const rect = canvas.getBoundingClientRect();
+  if (!rect.width) return;
+
+  const meta  = obj.meta || {};
+
+  // 🔥 مصدر العرض الحقيقي
+  const fixedLines = Array.isArray(meta.fixedLines) ? meta.fixedLines : null;
+
+  const htmlForView = fixedLines
+    ? fixedLines.join("") 
+    : (meta.html || "");
+
+  const dir   = meta.dir || detectDir(meta.html || "");
+  const align = dir === "rtl" ? "right" : "left";
+
+  // ===============================
+  // 🔥 التغيير الجوهري هنا
+  // ===============================
+
+  const viewportH_now = window.innerHeight || document.documentElement.clientHeight;
+  const viewportH_design = meta.viewportH || viewportH_now;
+  const wCss = Math.round(Math.max(2, obj.nw * rect.width));
+  const hCss = Math.round(Math.max(2, obj.nh * rect.height));
+
+  // const viewportScale = viewportH_now / viewportH_design;
+
+  const designW = meta.designWidth || wCss;
+const scale = wCss / designW;
+
+let dynamicFont = meta.baseFont * scale;
+
+
+
+
+// =====================================
+// 🔥 توسعة الصندوق فقط في الشاشات الصغيرة
+// =====================================
+let boostedWidth = wCss;
+
+const viewportW = window.innerWidth || document.documentElement.clientWidth;
+
+if (viewportW < 600) {
+
+  // طول النص
+  const textLength = (meta.html || "").length;
+
+  // توسعة تدريجية حسب طول النص
+  const textFactor = Math.min(1.25, 1 + (textLength / 140) * 0.08);
+
+  // عامل الشاشة الصغيرة
+  const mobileFactor = 1.18;
+
+  boostedWidth = wCss * textFactor * mobileFactor;
+}
+
+
+
+
+// const designW = meta.designWidth || wCss;
+// const scale = wCss / designW;
+
+// // الحجم الأساسي
+// let dynamicFont = meta.baseFont * scale;
+
+// // 🔥 تحسين القراءة في الشاشات الصغيرة
+// const viewportW = window.innerWidth || document.documentElement.clientWidth;
+
+// // أقل من 900px = تابلت / جوال
+// if (viewportW < 900) {
+
+//   // نسبة تكبير تدريجية
+//   const mobileBoost = 1 + ((900 - viewportW) / 900) * 0.18;
+
+//   dynamicFont *= mobileBoost;
+// }
+
+
+
+
+
+
+
+
+
+  const baseFont = meta.baseFont || meta.fontSize || 22;
+
+
+ 
+
+
+
+ 
+ 
+  // let dynamicFont = baseFont * viewportScale;
+
+  // dynamicFont = Math.max(10, Math.min(220, dynamicFont));
+
+  // ===============================
+  // حساب حجم الصندوق فقط للرسم
+  // ===============================
+
+
+  const cacheKey =
+    `VIEWPORT|${Math.round(viewportH_now)}|` +
+    `${meta.fontFamily || "MyArabic"}|${Math.round(dynamicFont)}|${meta.color || "#000"}|` +
+    `${dir}|${htmlForView}`;
+
+  if (obj._cacheKey === cacheKey && obj._cacheImg) return;
+  if (obj._cachePromise && obj._cachePromiseKey === cacheKey) return obj._cachePromise;
+
+  const base = {
+    dir,
+    align,
+    fontFamily: "MyArabic",
+    fontSize: dynamicFont,
+    color: meta.color || "#000000",
+  };
+
+  obj._loadingImage = true;
+  obj._cachePromiseKey = cacheKey;
+
+  obj._cachePromise = (async () => {
+    try {
+
+      const img = await htmlToImageRplay(
+        htmlForView,
+Math.max(1, boostedWidth),
+        Math.max(1, hCss),
+        base
+      );
+
+      obj._cacheKey = cacheKey;
+      obj._cacheImg = img;
+
+    } catch (err) {
+
+      warnThrottle("rplay", "htmlToImageRplay failed → fallback canvas", err);
+
+      obj._cacheImg = await plainTextToImage(
+        meta.html || "",
+       Math.max(1, boostedWidth),
+        Math.max(1, hCss),
+        base
+      );
+
+      obj._forceCanvasTextReplay = true;
+    }
+
+  })().finally(() => {
+    obj._cachePromise = null;
+    obj._cachePromiseKey = null;
+    obj._loadingImage = false;
+    requestAnimationFrame(redraw);
+  });
+
+  return obj._cachePromise;
+}
+async function htmlToImageRplay(html, w, h, base) {
+
+
+  try {
+
+    const dir = base.dir || "rtl";
+    const align = base.align || (dir === "rtl" ? "right" : "left");
+    const PADDING_LOCAL = 1;
+const INDENT_RATIO = 0.12;
+const indentPx = Math.round(w * INDENT_RATIO);
+    // const body =   (html || "");
+    const body = cleanHtmlForSvg(html);
+const wrapped = `<div xmlns="http://www.w3.org/1999/xhtml"
+style="
+  width:${w}px;height:${h}px;
+  box-sizing:border-box;
+  padding:${PADDING_LOCAL}px;
+  font-family:${base.fontFamily};
+  font-size:${base.fontSize}px;
+  direction:${dir};
+  text-align:${align};
+  unicode-bidi:isolate;
+  padding-left:${indentPx}px;
+ 
+
+  line-height:1.3;
+  color:${base.color || "#000"};
+">${body}</div>`;
+
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">
+      <foreignObject width="100%" height="100%">${wrapped}</foreignObject>
+    </svg>`;
+
+    const blob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+
+    const img = new Image();
+    img.decoding = "sync";
+    img.crossOrigin = "anonymous";
+
+    await new Promise((res, rej) => {
+      img.onload = res;
+      img.onerror = rej;
+      img.src = url;
+    });
+
+    if (img.decode) {
+      try { await img.decode(); } catch {}
+    }
+
+    URL.revokeObjectURL(url);
+    return img;
+
+  } catch (err) {
+
+    console.warn("htmlToImageRplay failed → fallback canvas", err);
+
+    // 🔥 fallback قوي
+    return await plainTextToImage(
+      base.lines?.join("\n") || html || "",
+      w,
+      h,
+      base
+    );
+  }
+}
+
+
+ 
+async function plainTextToImage(text, w, h, base) {
+  const cnv = document.createElement("canvas");
+  cnv.width = Math.ceil(w);
+  cnv.height = Math.ceil(h);
+  const ctx = cnv.getContext("2d");
+
+  ctx.clearRect(0, 0, cnv.width, cnv.height);
+  ctx.fillStyle = base.color || "#000";
+ctx.font = `${base.fontSize}px ${base.fontFamily || DEFAULT_FONT}`;
+  ctx.textBaseline = "top";
+  ctx.direction = base.dir || "rtl";
+ 
+
+const pad = 6;
+const gutter = Math.round(cnv.width * (LEFT_GUTTER_PCT / 100)); // ✅ 10% يسار
+const maxW = cnv.width - (pad * 2) - gutter;
+
+
+
+  const lineH = Math.floor(base.fontSize * 1.3);
+
+  // لفّ سطور بسيط مضمون
+  const words = (text || "").split(/\s+/);
+  let line = "";
+  let y = pad;
+
+  const drawLine = (s) => {
+    const x = (base.dir === "rtl") ? (cnv.width - pad) : pad;
+    ctx.textAlign = (base.dir === "rtl") ? "right" : "left";
+    ctx.fillText(s, x, y);
+    y += lineH;
+  };
+
+  for (const w0 of words) {
+    const test = line ? (line + " " + w0) : w0;
+    if (ctx.measureText(test).width > maxW && line) {
+      drawLine(line);
+      line = w0;
+      if (y + lineH > cnv.height - pad) break;
+    } else {
+      line = test;
+    }
+  }
+  if (line && y + lineH <= cnv.height - pad) drawLine(line);
+
+  const url = cnv.toDataURL("image/png");
+  const img = new Image();
+  await new Promise((res, rej) => {
+    img.onload = res;
+    img.onerror = rej;
+    img.src = url;
+  });
+  return img;
+}
+
+
+function createEditorForObj(obj) {
+  closeEditor(true);
+
+
+  const canvas = state.canvas;
+  const container = canvas.parentElement; // canvasarea
+  const { rect } = getPointerPos(canvas, { clientX: canvas.getBoundingClientRect().left, clientY: canvas.getBoundingClientRect().top });
+
+  const cssW = rect.width;
+  const cssH = rect.height;
+
+  const x = rect.left + obj.nx * cssW;
+  const y = rect.top  + obj.ny * cssH;
+  const w = obj.nw * cssW;
+  const h = obj.nh * cssH;
+
+  const meta = obj.meta || {};
+  const dir = meta.dir || detectDir(meta.html || "");
+
+  const ed = document.createElement("div");
+  ed.className = "konva-editor";  
+  ed.contentEditable = true;
+  ed.spellcheck = false;
+ed._objId = obj.id;
+  ed.style.position = "fixed";
+  ed.style.left = `${Math.round(x)}px`;
+  ed.style.top  = `${Math.round(y)}px`;
+  ed.style.width  = `${Math.round(w)}px`;
+  ed.style.height = `${Math.round(h)}px`;
+  ed.style.transform = "none";
+  ed.style.padding = `${PADDING}px`;
+ed.style.paddingLeft = `calc(${LEFT_GUTTER_PCT}% + ${PADDING}px)`;
+ed.style.paddingRight  = `${PADDING}px`;
+ed.style.paddingTop    = `${PADDING}px`;
+ed.style.paddingBottom = `${PADDING}px`;
+  ed.style.direction = dir;
+  ed.style.textAlign = dir === "rtl" ? "right" : "left";
+  ed.style.unicodeBidi = "plaintext";
+ed.style.fontFamily = DEFAULT_FONT;
+   ed.style.fontSize   = (meta.fontSize || 22) + "px";
+ed.style.whiteSpace = "pre-wrap";
+ed.style.wordBreak = "break-word";
+ed.style.overflowWrap = "anywhere";
+ed.style.lineHeight = "1.3";
+ed.style.boxSizing = "border-box";
+ed.style.overflow = "hidden";
+
+  // نخلي محرر الكتابة أسود افتراضي حتى لا “يلون كل شيء”
+  ed.style.color = "#000";
+  ed.innerHTML = meta.html || "";
+
+  document.body.appendChild(ed);
+  ed.addEventListener("pointerdown", (ev) => {
+  ev.stopPropagation();
+}, { capture: true });
+bindSelectionTrackerForEditor(ed);
+ 
+setupOutsideClose(ed);
+  requestAnimationFrame(() => {
+    ed.focus();
+    saveSelection();
+  });
+
+  ed.addEventListener("keyup", saveSelection);
+  ed.addEventListener("mouseup", saveSelection);
+ed.addEventListener("paste", (e) => {
+
+  e.preventDefault();
+
+  let text = (e.clipboardData || window.clipboardData).getData("text/plain");
+
+  ed._source = "external";
+
+  if (document.activeElement !== activeEditor.el) {
+    activeEditor.el.focus();
+  }
+
+  // 🔥 نحول النص لبنية editor حقيقية
+  const lines = text.split(/\n/);
+
+  let html = lines.map(line => {
+    if (!line.trim()) return "<div><br/></div>";
+    return `<div>${escapeHtml(line)}</div>`;
+  }).join("");
+
+  document.execCommand("insertHTML", false, html);
+
+  // 🔥 توحيد DOM فوراً (هذا يحل مشكلة المسافة)
+  normalizeEditorDom(ed);
+
+  ed.dispatchEvent(new Event("input", { bubbles: true }));
+  saveSelection();
+});
+
+ed.addEventListener("input", () => {
+state.isEtiting=true;
+state.draftTextRect = null; 
+  const t = ed.innerText || "";
+
+  const newDir = detectDir(t);
+  ed.style.direction = newDir;
+  ed.style.textAlign = newDir === "rtl" ? "right" : "left";
+ed.style.display = "block";
+  const currentW = ed.clientWidth;
+  const currentH = ed.clientHeight;
+
+  const scrollW = ed.scrollWidth;
+  const scrollH = ed.scrollHeight;
+const canvasRect = state.canvas.getBoundingClientRect();
+const edRect = ed.getBoundingClientRect();
+
+// الحد السفلي المسموح داخل الكانفس
+const maxBottom = canvasRect.bottom - 4;
+
+// إذا الصندوق وصل الحد
+if (edRect.bottom >= maxBottom) {
+
+  // احسب ارتفاع سطر
+  const cs = getComputedStyle(ed);
+
+  let lineH = parseFloat(cs.lineHeight);
+  if (!lineH || lineH === "normal") {
+    const fontSize = parseFloat(cs.fontSize) || 22;
+    lineH = fontSize * 1.3;
+  }
+
+  // هل يمكن تكبير سطر إضافي؟
+  if (!ed._expandedAtBottom) {
+
+    ed._expandedAtBottom = true;
+
+    ed.style.height = (ed.clientHeight + lineH) + "px";
+
+    const obj = state.objects.find(o => o.id === ed._objId);
+    if (obj) {
+      const rect = state.canvas.getBoundingClientRect();
+      obj.nh = ed.clientHeight / rect.height;
+    }
+
+  } else {
+
+    // بعد السطر الإضافي → امنع الكتابة
+    ed.style.caretColor = "transparent";
+    ed.contentEditable = false;
+
+    setTimeout(() => {
+      ed.contentEditable = true;
+      ed.style.caretColor = "";
+    }, 50);
+
+  }
+
+  return;
+}
+
+  // =========================
+  //   لف مبكر عند نصف السطر
+  // =========================
+  const cs = getComputedStyle(ed);
+  const padL = parseFloat(cs.paddingLeft) || 0;
+  const padR = parseFloat(cs.paddingRight) || 0;
+
+  const availableW = ed.clientWidth - padL - padR;
+
+  // قياس عرض السطر الحالي حتى الكيرسر
+  const lineW = measureCurrentLineWidthPx(ed);
+
+ 
+  
+  
+  // =========================
+  // 1️⃣ النزول سطر تلقائي
+  // =========================
+  if (scrollW > currentW) {
+    ed.style.whiteSpace = "pre-wrap";
+    ed.style.wordBreak = "break-word";
+  }
+
+  // =========================
+  // 2️⃣ تكبير الصندوق
+  // =========================
+if (scrollH > currentH) {
+
+  const cs = getComputedStyle(ed);
+
+  let lineH = parseFloat(cs.lineHeight);
+  if (!lineH || lineH === "normal") {
+    const fontSize = parseFloat(cs.fontSize) || 22;
+    lineH = fontSize * 1.3;
+  }
+
+  ed.style.height = (currentH + lineH) + "px";
+
+  const obj = state.objects.find(o => o.id === ed._objId);
+  if (obj) {
+    const rect = state.canvas.getBoundingClientRect();
+    obj.nh = ed.clientHeight / rect.height;
+  }
+}
+
+
+  redraw();
+});
+
+
+
+//   ed.addEventListener("blur", () => closeEditor(true));
+
+  activeEditor = { el: ed, objId: obj.id };
+
+  obj.isEditing = true;
+redraw();
+}
+function bindSelectionTrackerForEditor(ed){
+  const onSel = () => {
+
+    if (ignoreSelectionChange) return;
+
+    if (!activeEditor) return;
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+
+    const r = sel.getRangeAt(0);
+
+    // لا تحفظ collapsed
+    if (r.collapsed) return;
+
+    if (ed.contains(r.commonAncestorContainer)) {
+      savedRange = r;
+    }
+  };
+
+  document.addEventListener("selectionchange", onSel);
+  ed._selTracker = onSel;
+}
+function getCaretRangeInEditable(ed) {
+  const sel = window.getSelection();
+  if (!sel || sel.rangeCount === 0) return null;
+  const r = sel.getRangeAt(0);
+  if (!ed.contains(r.startContainer)) return null;
+  return r;
+}
+function detectLineDirectionAtCaret(ed) {
+
+  const r = getCaretRangeInEditable(ed);
+  if (!r) return "ltr";
+
+  const textBefore = r.cloneRange();
+  textBefore.setStart(ed, 0);
+
+  const txt = textBefore.toString();
+
+  // خذ آخر 20 حرف فقط
+  const sample = txt.slice(-20);
+
+  // إذا فيه عربي
+  if (/[\u0600-\u06FF]/.test(sample)) return "rtl";
+
+  // إذا فيه أرقام أو لاتيني
+  if (/[0-9A-Za-z]/.test(sample)) return "ltr";
+
+  return "ltr";
+}
+
+// قياس عرض السطر الحالي من بدايته حتى الكيرسر
+function measureCurrentLineWidthPx(ed) {
+
+  const r = getCaretRangeInEditable(ed);
+  if (!r) return 0;
+
+  const caretRect = r.getClientRects()?.[0];
+  if (!caretRect) return 0;
+
+  const rr = r.cloneRange();
+  rr.collapse(true);
+
+  rr.setStart(ed, 0);
+  const rects = rr.getClientRects();
+  if (!rects || rects.length === 0) return 0;
+
+  const lineStartRect = rects[rects.length - 1];
+
+  // 🔥 اتجاه السطر الفعلي
+  const lineDir = detectLineDirectionAtCaret(ed);
+
+  if (lineDir === "rtl") {
+    // عربي
+    return Math.abs(lineStartRect.right - caretRect.left);
+  } else {
+    // إنجليزي + أرقام
+    return Math.abs(caretRect.right - lineStartRect.left);
+  }
+}
+
+function insertSoftLineBreak() {
+  // هذا يعطي <br> داخل contentEditable ويشتغل في أغلب المتصفحات
+  document.execCommand("insertLineBreak");
+}
+function setupOutsideClose(ed){
+  const onDocDown = (ev) => {
+
+     if (ed.contains(ev.target)) return;
+
+     const tb = document.getElementById("textToolbar");
+    if (tb && tb.contains(ev.target)) return;
+
+     const flyout = document.getElementById("toolFlyout");
+    if (flyout && flyout.contains(ev.target)) return;
+
+     document.removeEventListener("pointerdown", onDocDown, true);
+    closeEditor(true);
+  };
+
+  document.addEventListener("pointerdown", onDocDown, true);
+  ed._outsideCloser = onDocDown;
+}
+// دالة   لحساب عدد الأسطر
+function countVisualLinesInContentEditable(el) {
+ 
+  const text = (el.innerText || "").replace(/\u200B/g, "");
+  if (!text.trim()) return 1;
+
+  const range = document.createRange();
+  range.selectNodeContents(el);
+
+  const rects = Array.from(range.getClientRects());
+
+  // لو ما فيه rects (نادر) fallback
+  if (!rects.length) return 1;
+
+  // نجمع rects حسب الـ top (كل line لها top قريب)
+  const tolerance = 1.5; // سماحية اختلاف البيكسل
+  rects.sort((a, b) => a.top - b.top);
+
+  let lines = 0;
+  let lastTop = null;
+
+  for (const r of rects) {
+    if (r.width < 1 || r.height < 1) continue;
+
+    if (lastTop === null || Math.abs(r.top - lastTop) > tolerance) {
+      lines++;
+      lastTop = r.top;
+    }
+  }
+
+  return Math.max(1, lines);
+}
+function countLinesByHeight(el) {
+  const cs = getComputedStyle(el);
+
+  // line-height الحقيقي (قد يكون "normal")
+  let lineH = parseFloat(cs.lineHeight);
+  if (!Number.isFinite(lineH)) {
+    const fontSize = parseFloat(cs.fontSize) || 22;
+    lineH = fontSize * 1.3;
+  }
+
+  const padTop = parseFloat(cs.paddingTop) || 0;
+  const padBot = parseFloat(cs.paddingBottom) || 0;
+
+  const contentH = Math.max(0, el.scrollHeight - padTop - padBot);
+
+  // ✅ ceil أفضل من round لأن أي كسور تعني سطر إضافي
+  const lc = Math.ceil(contentH / lineH);
+
+  return Math.max(1, lc);
+}
+// دالة  النهائي الموحدة لحساب عدد الاسطر 
+function getAccurateLineCount(el) {
+  try {
+    const lc = countVisualLinesInContentEditable(el);
+    if (lc && lc > 0) return lc;
+  } catch {}
+
+  // fallback
+  return countLinesByHeight(el);
+}
+
+function exportHtmlAsFixedLines(el) {
+
+  const blocks = Array.from(el.children || []);
+
+  if (blocks.length) {
+    return blocks.map(ch => ch.outerHTML);
+  }
+
+  // fallback بدون escape
+  const lines = (el.innerText || "").split(/\n/);
+
+  return lines.map(t => {
+    if (!t.trim()) return "<div><br/></div>";
+    return `<div>${t}</div>`; // 🔥 بدون escapeHtml
+  });
+}
+
+function escapeHtml(s){
+  return String(s)
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
+}
+
+async function closeEditor(save) {
+  if (!activeEditor) return;
+
+  const { el, objId } = activeEditor;
+  activeEditor = null;
+
+  const obj = state.objects.find(o => o.id === objId);
+
+   if (!obj) {
+    if (el?._outsideCloser) {
+      document.removeEventListener("pointerdown", el._outsideCloser, true);
+      el._outsideCloser = null;
+    }
+    return;
+  }
+if (el?._selTracker) {
+  document.removeEventListener("selectionchange", el._selTracker);
+  el._selTracker = null;
+}
+  if (save) {
+ // ==========================================
+// 🔥 توسيع بسيط من جهة اليسار بعد التحرير
+// ==========================================
+
+const EXPAND_LEFT_PCT = 0.01; // 1% من عرض الكانفس
+
+ 
+
+
+
+
+    const plain = el.innerText || "";
+    const dir = detectDir(plain);
+ 
+     const cs = getComputedStyle(el);
+let finalHtml;
+
+if (el._source === "external") {
+  // النص جاء من PDF
+  finalHtml = sanitizePdfHtml(el);
+} else {
+  // النص من المستخدم داخل النظام
+  finalHtml = el.innerHTML;
+}
+
+normalizeEditorDom(el);
+const fixedLines = exportHtmlAsFixedLines(el);  
+  obj.meta = {
+      ...(obj.meta || {}),
+      html: finalHtml,
+ fixedLines,                
+  lineCount: fixedLines.length, 
+     lineCount: getAccurateLineCount(el),  
+      dir,
+fontFamily: obj.meta?.fontFamily || DEFAULT_FONT,
+      fontSize: obj.meta?.fontSize || 22,
+      color: obj.meta?.color || "#000000",
+ designWidth : el.clientWidth,
+    };
+
+ el._source = null;
+
+
+//  obj.kind ="textHtml";
+
+ 
+ 
+
+
+
+state.isEtiting=false;
+
+obj.meta.baseFont = parseFloat(cs.fontSize) || (obj.meta.fontSize || 22);
+if (!obj.meta.viewportH) {
+  obj.meta.viewportH = window.innerHeight || document.documentElement.clientHeight  ;
+}
+ 
+      const fontPx = parseFloat(cs.fontSize) || (obj.meta.fontSize || 22);
+
+  obj.meta.baseFont  = fontPx;
+ 
+    pushEvent({
+      type: "object.update",
+      id: obj.id,
+    
+     nx: obj.nx  ,
+   ny:obj.ny ,
+ nw: obj.nw  ,
+  nh:obj.nh  ,
+
+     kind:"object.update",
+     meta: obj.meta 
+    });
+  }
+
+   if (el?.parentNode) el.parentNode.removeChild(el);
+
+   await ensureTextHtmlCache(obj);
+
+  obj.isEditing = false;
+
+  redraw();
+}
+ function applyStyle(command, value = null) {
+
+  if (!activeEditor) return;
+
+  const el = activeEditor.el;
+  el.focus();
+
+  let sel = window.getSelection();
+
+  if (!sel || sel.rangeCount === 0) {
+    if (!savedRange) return;
+    sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(savedRange);
+  }
+
+  const range = sel.getRangeAt(0);
+
+  // 🔥 fallback إذا execCommand فشل
+  try {
+    document.execCommand(command, false, value);
+  } catch {}
+
+  // =====================================
+  // FIX: force style inline
+  // =====================================
+
+if (command === "foreColor") {
+
+  try {
+    document.execCommand("styleWithCSS", false, true);
+    document.execCommand("foreColor", false, value);
+  } catch {}
+}
+
+  saveSelection();
+
+  const obj = state.objects.find(o => o.id === activeEditor.objId);
+  if (obj) {
+    obj.meta = obj.meta || {};
+    obj.meta.html = el.innerHTML;
+    obj.meta.dir = detectDir(obj.meta.html);
+  }
+}
+
+ 
+export function disableTextHtmlTool() {
+
+  // ===============================
+  // 1) تعطيل الأداة
+  // ===============================
+  toolActive = false;
+
+ 
+  if (canvasRef && handlers) {
+    canvasRef.removeEventListener("pointerdown", handlers.down);
+    canvasRef.removeEventListener("pointermove", handlers.move);
+    canvasRef.removeEventListener("pointerup", handlers.up);
+    canvasRef.removeEventListener("pointercancel", handlers.up);
+    canvasRef.removeEventListener("dblclick", onDoubleClickTextHtml);
+  }
+
+  // ===============================
+  // 3) إيقاف أي transform جاري
+  // ===============================
+  state.transform.active = false;
+  state.transform.mode = null;
+  state.transform.startObj = null;
+  state.transform.startX = 0;
+  state.transform.startY = 0;
+  state.transform.cssW = 0;
+  state.transform.cssH = 0;
+
+ 
+  start = null;
+  tempRect = null;
+  dragTarget = null;
+  dragStart = null;
+  dragStartObj = null;
+
+ 
+  state.draftTextRect = null;
+
+ 
+  state.selectedTextHtmlId = null;
+
+ 
+  closeEditor(true);
+  activeEditor = null;
+  savedRange = null;
+ 
+  if (canvasRef) {
+  setCursor("text");   }
+
+ 
+  state.isEtiting = false;
+  __warnOnce.html = 0;
+  __warnOnce.rplay = 0;
+ 
+  bound = false;
+  handlers = null;
+  canvasRef = null;
+ count=0;
+   redraw();
+
+ }
+
+
+ 
+export function bindTextHtmlToolbar(toolbarIds) {
+
+  const t = toolbarIds;
+
+  const toolbar = document.getElementById("textToolbar");
+
+ toolbar?.addEventListener("mousedown", (e) => {
+
+   if (e.target?.type === "color") return;
+
+  e.preventDefault();
+});
+
+  const bindBtn = (btn, cmd, valueFn) => {
+    btn?.addEventListener("mousedown", (e) => {
+      e.preventDefault();
+
+      if (!activeEditor) return;
+
+      activeEditor.el.focus();
+      restoreSelection();
+
+      const value = valueFn ? valueFn() : null;
+ applyStyle(cmd, value);
+      saveSelection();
+
+      const obj = state.objects.find(o => o.id === activeEditor.objId);
+      if (obj) {
+        obj.meta = obj.meta || {};
+        obj.meta.html = activeEditor.el.innerHTML;
+        obj.meta.dir = detectDir(obj.meta.html);
+      }
+    });
+  };
+
+  bindBtn(t.boldBtn, "bold");
+  bindBtn(t.italicBtn, "italic");
+  bindBtn(t.underlineBtn, "underline");
+
+// 1️⃣ قبل فتح color dialog
+// عند فتح color picker
+t.colorInp?.addEventListener("pointerdown", () => {
+  if (!activeEditor) return;
+
+  ignoreSelectionChange = true;
+
+  activeEditor.el.focus();
+  saveSelection();
+});
+
+t.colorInp?.addEventListener("input", () => {
+  if (!activeEditor || !savedRange) return;
+
+  activeEditor.el.focus({ preventScroll:true });
+
+  restoreSelection();
+
+  applyStyle("foreColor", t.colorInp.value);
+
+  saveSelection();
+});
+
+t.colorInp?.addEventListener("change", () => {
+  ignoreSelectionChange = false;
+});
+// أثناء السحب داخل dialog
+t.colorInp?.addEventListener("input", () => {
+
+  if (!activeEditor || !savedRange) return;
+
+  activeEditor.el.focus({ preventScroll:true });
+
+  ignoreSelectionChange = true;
+
+  restoreSelection();
+  applyStyle("foreColor", t.colorInp.value);
+});
+
+
+// عند إغلاق dialog
+t.colorInp?.addEventListener("change", () => {
+
+  ignoreSelectionChange = false;
+  saveSelection();
+});
+
+  
+ 
+}
+function filterInlineStyle(styleText){
+  if (!styleText) return "";
+
+  const allowed = new Set([
+    "color",
+    "background-color",
+    "font-weight",
+    "font-style",
+    "text-decoration",
+    "text-decoration-line"
+  ]);
+
+  const out = [];
+
+  styleText.split(";").forEach(part => {
+    const p = part.trim();
+    if (!p) return;
+
+    const idx = p.indexOf(":");
+    if (idx < 0) return;
+
+    const key = p.slice(0, idx).trim().toLowerCase();
+    const val = p.slice(idx + 1).trim();
+
+    if (allowed.has(key) && val) {
+      out.push(`${key}:${val}`);
+    }
+  });
+
+  return out.join(";");
+}
+
+function keepSafeStylesOnly(html){
+  return html.replace(/style="([^"]*)"/gi, (m, s) => {
+    const filtered = filterInlineStyle(s);
+    return filtered ? `style="${filtered}"` : "";
+  });
+}
+
+export function enableTextHtmlTool(canvas) {
+ 
+  if (!canvas) return;
+  if (bound) return;
+
+  canvasRef = canvas;
+  bound = true;
+  toolActive = true;
+state.selectedTextHtmlId = null;
+  handlers = {
+down: (e) => {
+
+  if (!toolActive) return;
+  // if (state.viewOnly) return;
+  if (activeEditor) return;
+const pos = getPointerPos(canvasRef, e);
+
+ let targetObj = null;
+let handle = null;
+
+for (let i = state.objects.length - 1; i >= 0; i--) {
+  const o = state.objects[i];
+  if (o.kind !== "textHtml") continue;
+
+  const h = hitTestHandles(o, pos.xCss, pos.yCss);
+  if (h) {
+    targetObj = o;
+    handle = h;
+    break;
+  }
+}
+
+ 
+if (targetObj && handle) {
+  state.selectedTextHtmlId = targetObj.id;
+
+  const rect = canvasRef.getBoundingClientRect();
+  if (handle === "rotate") {
+    const cx = (targetObj.nx + targetObj.nw/2) * rect.width;
+    const cy = (targetObj.ny + targetObj.nh/2) * rect.height;
+    startAngle = Math.atan2(pos.yCss - cy, pos.xCss - cx);
+  }
+  state.transform.active = true;
+  state.transform.mode = handle;
+  state.transform.startX = pos.xCss;
+  state.transform.startY = pos.yCss;
+  state.transform.startObj = JSON.parse(JSON.stringify(targetObj));
+  state.transform.cssW = rect.width;
+  state.transform.cssH = rect.height;
+   e.preventDefault();
+  e.stopPropagation();
+  e.stopImmediatePropagation?.();
+
+  canvasRef.setPointerCapture?.(e.pointerId);
+
+  // ✅ وأضف redraw مباشرة (عشان نشوف)
+
+    redraw();
+  return;
+}
+ 
+
+// 🔎 غير ذلك: هل ضغط داخل الصندوق نفسه؟
+const obj = hitTestTextHtml(pos.xCss, pos.yCss);
+if (obj){
+  state.selectedTextHtmlId = obj.id;
+  redraw();
+  return;
+}
+
+  // رسم جديد
+
+
+  // ✅ إنشاء صندوق ثابت مباشرة عند النقرة
+  if(toolActive  && count===0 ){
+state.selectedTextHtmlId = null;
+createFixedTextHtmlBoxAtPointer(e, { wPx: 60, hPx: 30 });
+count=1;
+return;
+  }else{
+  state.selectedTextHtmlId = null;
+
+  start = { x: pos.xCss, y: pos.yCss };
+  isDragging = true;
+  tempRect = { x:start.x, y:start.y, w:1, h:1 };
+  state.draftTextRect = {
+    x: start.x,
+    y: start.y,
+    w: 1,
+    h: 1
+  };
+       redraw();
+  }
+
+},
+
+
+
+move: (e) => {
+
+  if (!toolActive) return;
+
+  const obj = state.objects.find(o => o.id === state.selectedTextHtmlId);
+  const pos = getPointerPos(canvasRef, e);
+state.isDrawingTextDraft = true;
+  // 🎯 CURSOR فقط عند hover
+  if (!state.transform.active) {
+    if (obj) {
+      const handle = hitTestHandles(obj, pos.xCss, pos.yCss);
+      setCursorByHandle(handle || null);
+    } else {
+       setCursor("text");
+    }
+  }
+ 
+  if (state.transform.active){
+
+    if (!obj) return;
+obj._freezeWrap = true;
+    const startObj = state.transform.startObj;
+
+    const dx = (pos.xCss - state.transform.startX) / state.transform.cssW;
+    const dy = (pos.yCss - state.transform.startY) / state.transform.cssH;
+
+    const MIN_W = 0.03;
+    const MIN_H = 0.03;
+
+    // =========================================================
+    // 🟢 MOVE
+    // =========================================================
+    if (state.transform.mode === "move" || state.transform.mode === "tc") {
+      obj.nx = startObj.nx + dx;
+      obj.ny = startObj.ny + dy;
+        clampBoxInsideCanvas(obj);
+      redraw();
+      return;
+    }
+ 
+    let nx = startObj.nx;
+    let ny = startObj.ny;
+    let nw = startObj.nw;
+    let nh = startObj.nh;
+
+    if (state.transform.mode === "br") {
+      nw += dx;
+      nh += dy;
+    }
+
+    if (state.transform.mode === "tr") {
+      nw += dx;
+      nh -= dy;
+      ny += dy;
+    }
+
+    if (state.transform.mode === "tl") {
+      nw -= dx;
+      nh -= dy;
+      nx += dx;
+      ny += dy;
+    }
+
+    if (state.transform.mode === "bl") {
+      nw -= dx;
+      nh += dy;
+      nx += dx;
+    }
+
+    if (state.transform.mode === "bc") {
+      nh += dy;
+    }
+
+    if (state.transform.mode === "ml") {
+      nw -= dx;
+      nx += dx;
+    }
+
+    if (state.transform.mode === "mr") {
+      nw += dx;
+    }
+
+    // clamp
+    nw = Math.max(MIN_W, nw);
+    nh = Math.max(MIN_H, nh);
+
+    obj.nx = nx;
+    obj.ny = ny;
+    obj.nw = nw;
+    obj.nh = nh;
+clampBoxInsideCanvas(obj);
+    // =========================================================
+    // 🔵 ROTATE
+    // =========================================================
+    if (state.transform.mode === "rotate") {
+
+      const cx = (startObj.nx + startObj.nw/2) * state.transform.cssW;
+      const cy = (startObj.ny + startObj.nh/2) * state.transform.cssH;
+
+      const angle = Math.atan2(pos.yCss - cy, pos.xCss - cx);
+
+      obj.rotation = startObj.rotation + (angle - startAngle);
+
+      redraw();
+      return;
+    }
+
+    redraw();
+    return;
+  }
+
+  // =========================================================
+  // 🟣 DRAW NEW RECT
+  // =========================================================
+  if (!isDragging || !tempRect) return;
+
+  const x = Math.min(start.x, pos.xCss);
+  const y = Math.min(start.y, pos.yCss);
+  const w = Math.abs(pos.xCss - start.x);
+  const h = Math.abs(pos.yCss - start.y);
+
+  tempRect = { x,y,w,h };
+      state.draftTextRect = { x, y, w, h };
+  
+  redraw();
+},
+
+
+
+up: async (e) => {
+  if (!toolActive) return;
+    const canvasRect = canvasRef.getBoundingClientRect();
+state.isDrawingTextDraft = false;
+if (state.transform.active){
+
+  const obj = state.objects.find(o => o.id === state.selectedTextHtmlId);
+
+  if (obj){
+    obj.nw = Math.max(0.02, obj.nw);
+    obj.nh = Math.max(0.02, obj.nh);
+
+    obj.nx = Math.max(0, Math.min(1 - obj.nw, obj.nx));
+    obj.ny = Math.max(0, Math.min(1 - obj.nh, obj.ny));
+obj._freezeWrap = false;
+
+
+
+const rect = state.canvas.getBoundingClientRect();
+const newWidthCss = obj.nw * rect.width;
+
+// اجعل العرض الحالي هو designWidth الجديد
+obj.meta.designWidth = newWidthCss;
+
+// ثبت baseFont على الحجم الحالي
+obj.meta.baseFont = obj.meta.fontSize || obj.meta.baseFont || 22;
+obj.meta.lineCount=getAccurateLineCount(obj.meta.html),
+ 
+
+
+// أعد بناء الكاش من الصفر
+obj._cacheImg = null;
+obj._cacheKey = null;
+     await ensureTextHtmlCache(obj);
+  }
+    // 🔥 تسجيل آخر موضع للصندوق
+      // 🔥 تسجيل آخر موضع للصندوق
+    pushEvent({
+      type: "object.update",
+      id: obj.id,
+      nx: obj.nx,
+      ny: obj.ny,
+      nw: obj.nw,
+      nh: obj.nh,
+      meta: obj.meta
+    });
+
+  state.transform.active = false;
+  state.transform.mode = null;
+  canvasRef.releasePointerCapture?.(e.pointerId);
+  setCursor("text");
+  redraw();
+  return;
+}
+
+
+  // ===== END DRAG =====
+  if (dragTarget) {
+    dragTarget.nx = Math.max(0, Math.min(1 - dragTarget.nw, dragTarget.nx));
+    dragTarget.ny = Math.max(0, Math.min(1 - dragTarget.nh, dragTarget.ny));
+
+    dragTarget = null;
+    redraw();
+    return;
+  }
+
+  // ===== END DRAW NEW RECT =====
+  if (!isDragging) return;
+  isDragging = false;
+
+  if (!tempRect) return;
+
+  const cssW = canvasRect.width;
+  const cssH = canvasRect.height;
+
+  if (tempRect.w < 80 || tempRect.h < 40) {
+    tempRect = null;
+ 
+    redraw();
+    return;
+  }
+
+  const obj = {
+    id: "txt_" + Math.random().toString(16).slice(2),
+    kind: "textHtml",
+    nx: tempRect.x / cssW,
+    ny: tempRect.y / cssH,
+    nw: tempRect.w / cssW,
+    nh: tempRect.h / cssH,
+    meta: {
+      html: "",
+     
+      dir: "rtl",
+fontFamily: DEFAULT_FONT,
+      fontSize: 22,
+      color: "#000000",
+    },
+    isEditing: false
+  };
+
+  state.objects.push(obj);
+
+  // ✅ حدده بعد الإنشاء
+  state.selectedTextHtmlId = obj.id;
+
+  //   لا تسجل في timeline (حسب طلبك) — إذن احذف pushEvent(object.add)
+  // pushEvent({ type:"object.add", object: obj });
+
+  tempRect = null;
+ state.transform.active = false;
+  state.transform.mode = null;
+  state.transform.objId = null;
+
+  obj._freezeWrap = false;
+obj._cacheImg = null;
+obj._cacheKey = null;
+  await ensureTextHtmlCache(obj);
+ 
+  redraw();
+e.preventDefault();
+e.stopPropagation?.();
+createEditorForObj(obj);
+
+ 
+},
+
+  };
+
+  canvasRef.addEventListener("pointerdown", handlers.down, { passive:false });
+  canvasRef.addEventListener("pointermove", handlers.move, { passive:false });
+  canvasRef.addEventListener("pointerup", handlers.up, { passive:false });
+  canvasRef.addEventListener("pointercancel", handlers.up, { passive:false });
+
+  // dblclick فتح تحرير
+  canvasRef.addEventListener("dblclick", onDoubleClickTextHtml);
+}
+function onDoubleClickTextHtml(e){
+
+  if (!toolActive) return;
+  if (activeEditor) return;
+
+  const { xCss, yCss } = getPointerPos(canvasRef, e);
+  const rect = canvasRef.getBoundingClientRect();
+  const cssW = rect.width;
+  const cssH = rect.height;
+
+  for (let i = state.objects.length - 1; i >= 0; i--) {
+
+    const o = state.objects[i];
+    if (o.kind !== "textHtml") continue;
+
+    const x = o.nx * cssW;
+    const y = o.ny * cssH;
+    const w = o.nw * cssW;
+    const h = o.nh * cssH;
+
+    if (xCss >= x && xCss <= x + w && yCss >= y && yCss <= y + h) {
+      createEditorForObj(o);
+      break;
+    }
+  }
+}
+function hitTestTextHtml(xCss, yCss) {
+  const canvas = state.canvas;
+  if (!canvas) return null;
+  if (!toolActive) return;
+  const rect = canvas.getBoundingClientRect();
+  const cssW = rect.width;
+  const cssH = rect.height;
+
+  for (let i = state.objects.length - 1; i >= 0; i--) {
+    const o = state.objects[i];
+    if (o.kind !== "textHtml") continue;
+
+    const x = o.nx * cssW;
+    const y = o.ny * cssH;
+    const w = o.nw * cssW;
+    const h = o.nh * cssH;
+
+    if (xCss >= x && xCss <= x + w && yCss >= y && yCss <= y + h) {
+      return o;
+    }
+  }
+  return null;
+}
+function hitTestHandles(obj, xCss, yCss){
+  if (!toolActive) return;
+  const canvas = state.canvas;
+  const rect = canvas.getBoundingClientRect();
+  const cssW = rect.width;
+  const cssH = rect.height;
+
+  const x = obj.nx * cssW;
+  const y = obj.ny * cssH;
+  const w = obj.nw * cssW;
+  const h = obj.nh * cssH;
+
+  const HANDLE = 22;
+
+const handles = {
+  move: [x + w/2, y + h/2],
+  rotate: [x + w/2, y - 28],
+
+  tl: [x, y],
+  tc: [x + w/2, y],
+  tr: [x + w, y],
+
+  ml: [x, y + h/2],
+  mr: [x + w, y + h/2],
+
+  bl: [x, y + h],
+  bc: [x + w/2, y + h],
+  br: [x + w, y + h]
+};
+
+
+  for (const key in handles){
+    const [hx, hy] = handles[key];
+
+    if (
+      xCss >= hx-HANDLE &&
+      xCss <= hx+HANDLE &&
+      yCss >= hy-HANDLE &&
+      yCss <= hy+HANDLE
+    ){
+      return key;
+    }
+  }
+
+  return null;
+}
+
+function setCursorByHandle(handle){
+
+  const c = state.canvas;
+
+  if (!handle){
+   setCursor("text");
+
+    return;
+  }
+
+  if (handle === "move"){
+    c.style.cursor = "grab";
+    return;
+  }
+
+  if (handle === "rotate"){
+    c.style.cursor = "crosshair";
+    return;
+  }
+
+  if (handle === "tl" || handle === "br"){
+    c.style.cursor = "nwse-resize";
+    return;
+  }
+
+  if (handle === "tr" || handle === "bl"){
+    c.style.cursor = "nesw-resize";
+    return;
+  }
+
+  if (handle === "tc" || handle === "bc"){
+    c.style.cursor = "ns-resize";
+    return;
+  }
+
+  if (handle === "ml" || handle === "mr"){
+    c.style.cursor = "ew-resize";
+    return;
+  }
+}
+ 
+
+function clampBoxInsideCanvas(obj) {
+  // ضمان قيم موجبة
+  obj.nw = Math.max(0.02, obj.nw);
+  obj.nh = Math.max(0.02, obj.nh);
+
+  // clamp top-left داخل الكانفس (Top-left system)
+  obj.nx = Math.max(0, Math.min(1 - obj.nw, obj.nx));
+  obj.ny = Math.max(0, Math.min(1 - obj.nh, obj.ny));
+}

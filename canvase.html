@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<title>البوصلة ترسم على Canvas</title>
+<style>
+.tab { display:none; }
+.tab.active { display:block; }
+
+.called-btn {
+  background: #22c55e;
+  color: white;
+  border-radius: 6px;
+}
+
+
+</style>
+</head>
+<body>
+<!-- Tabs -->
+<div class="tabs">
+  <button onclick="openTab('tab1')">Tab 1</button>
+  <button onclick="openTab('tab2')">Tab 2</button>
+  <button onclick="openTab('tab3')">Tab 3</button>
+</div>
+
+<!-- TAB 1 -->
+<div id="tab1" class="tab">
+  <h3>Tab 1</h3>
+  <button id="backBtn" onclick="goBack()" style="display:none">
+    🔙 الرجوع
+  </button>
+</div>
+
+<!-- TAB 2 -->
+<div id="tab2" class="tab">
+  <h3>Tab 2</h3>
+  <button id="btnA" onclick="goToTab1('tab2','btnA')">زر A</button>
+</div>
+
+<!-- TAB 3 -->
+<div id="tab3" class="tab">
+  <h3>Tab 3</h3>
+  <button id="btnB" onclick="goToTab1('tab3','btnB')">زر B</button>
+</div>
+
+<script>
+function openTab(tabId){
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+  document.getElementById(tabId).classList.add("active");
+}
+const TabState = {
+  fromTab: null,
+  fromButtonId: null
+};
+
+function goToTab1(tabName, buttonId){
+  // تخزين المصدر
+  TabState.fromTab = tabName;
+  TabState.fromButtonId = buttonId;
+
+  // إظهار زر الرجوع
+  document.getElementById("backBtn").style.display = "inline-block";
+
+  // الانتقال
+  openTab("tab1");
+}
+function goBack(){
+  if(!TabState.fromTab) return;
+
+  // الرجوع للتاب
+  openTab(TabState.fromTab);
+
+  // تلوين الزر
+  const btn = document.getElementById(TabState.fromButtonId);
+  if(btn){
+    btn.classList.add("called-btn");
+  }
+
+  // إخفاء زر الرجوع
+  document.getElementById("backBtn").style.display = "none";
+
+  // تفريغ الحالة
+  TabState.fromTab = null;
+  TabState.fromButtonId = null;
+}
+
+</script>
+
+</body>
+</html>

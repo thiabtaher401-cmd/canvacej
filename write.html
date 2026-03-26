@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>قراءة الطالب مع تلوين الكلمة</title>
+
+<style>
+body{
+  font-family: Tahoma;
+  padding:40px;
+  font-size:22px;
+  line-height:1.8;
+}
+
+.word{
+  transition: 0.2s;
+}
+
+.active-word{
+  background:#22c55e;
+  color:white;
+  padding:2px 4px;
+  border-radius:4px;
+}
+
+button{
+  margin-top:20px;
+  padding:10px 20px;
+  font-size:18px;
+}
+</style>
+</head>
+<body>
+
+<div id="textContainer">
+  هذا مثال لتجربة قراءة الطالب للنص مع تلوين الكلمة التي ينطقها حالياً.
+</div>
+
+<button id="startBtn">🎤 ابدأ القراءة</button>
+
+<script>
+const textContainer = document.getElementById("textContainer");
+const startBtn = document.getElementById("startBtn");
+
+// تقسيم النص إلى كلمات
+function prepareText(){
+  const text = textContainer.innerText;
+  const words = text.split(" ");
+  
+  textContainer.innerHTML = words
+    .map(w => `<span class="word">${w}</span>`)
+    .join(" ");
+}
+
+prepareText();
+
+const words = document.querySelectorAll(".word");
+
+let recognition;
+
+startBtn.onclick = () => {
+
+  if (!('webkitSpeechRecognition' in window)) {
+    alert("المتصفح لا يدعم التعرف على الصوت");
+    return;
+  }
+
+  recognition = new webkitSpeechRecognition();
+  recognition.lang = "ar-SA";
+  recognition.continuous = true;
+  recognition.interimResults = true;
+
+  recognition.onresult = (event) => {
+
+    const transcript =
+      event.results[event.results.length - 1][0].transcript.trim();
+
+    const spokenWords = transcript.split(" ");
+
+    words.forEach(w => w.classList.remove("active-word"));
+
+    for(let i=0;i<words.length;i++){
+      if(spokenWords.includes(words[i].innerText)){
+        words[i].classList.add("active-word");
+      }
+    }
+  };
+
+  recognition.start();
+};
+</script>
+
+</body>
+</html>

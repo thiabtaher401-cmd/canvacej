@@ -1,0 +1,2813 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canvas System</title> 
+<link rel="stylesheet" href="css/model.css">
+<link rel="stylesheet" href="css/CssShapes.css">
+<link rel="stylesheet" href="css/LayerCss.css">
+<link rel="stylesheet" href="css/toolbarone.css">
+<link rel="stylesheet" href="css/modelAction.css">
+<link rel="icon" href="data:,">
+
+<link rel="stylesheet" href="css/Categories.css">
+<link rel="stylesheet" href="css/QoutionSemple.css">
+<link rel="stylesheet" href="css/noticeCropConfirm.css">
+<link rel="stylesheet" href="css/saveOverlay.css">
+<link rel="stylesheet" href="css/Math.css">
+<link rel="stylesheet" href="css/TextToolbar.css">
+<link rel="stylesheet" href="css/replaybar.css">
+<link rel="stylesheet" href="css/SideTools.css">
+<link rel="stylesheet" href="css/mindmap-layer.CSS">
+<link rel="stylesheet" href="css/TooleSidebar.css">
+<style>
+    @font-face {
+  font-family: "MyArabic";
+  src: url("./js/tools/fonts/NotoSansArabic-Regular.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+ * {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+ 
+ 
+ 
+.layer {
+  pointer-events: auto;
+}
+ 
+:root{--cursor-pen:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'><g transform='rotate(-30 16 16)'><rect x='13' y='4' width='6' height='18' rx='2' fill='%23f4c430' stroke='%23000' stroke-width='1'/><polygon points='13,4 19,4 16,0' fill='%238b5a2b'/><rect x='13' y='22' width='6' height='6' fill='%23333'/></g></svg>") 10 2, crosshair;}
+
+
+:root{--cursor-highlight:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'><g transform='rotate(-30 16 16)'><rect x='11' y='6' width='10' height='14' rx='3' fill='%23f59e0b' stroke='%23000' stroke-width='1'/><rect x='11' y='20' width='10' height='6' fill='%23fde68a' stroke='%23000' stroke-width='1'/><polygon points='11,6 21,6 16,1' fill='%23b45309'/></g></svg>") 10 2, crosshair;}
+
+:root {
+--cursor-eraser: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'><g transform='translate(32,0) scale(-1,1)'><rect x='8' y='8' width='16' height='16' rx='3' fill='%23ffffff' stroke='%23000000' stroke-width='1.5'/></g></svg>") 16 16, crosshair; cursor: var(--cursor-select);}
+:root{
+  
+--cursor-text:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='32'%20height='32'%20viewBox='0%200%2032%2032'%3E%3Cg%20transform='translate(32,0)%20scale(-1,1)'%3E%3Crect%20x='6.5'%20y='8'%20width='19'%20height='14.5'%20rx='3'%20ry='3'%20fill='none'%20stroke='%23000'%20stroke-width='1.6'%20stroke-dasharray='3%202'/%3E%3Cpath%20d='M12%2013h8'%20stroke='%23000'%20stroke-width='1.6'%20stroke-linecap='round'/%3E%3Cpath%20d='M16%2013v9'%20stroke='%23000'%20stroke-width='1.6'%20stroke-linecap='round'/%3E%3C/svg%3E") 10 6, text;
+}
+
+:root{
+  
+  --cursor-node: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'><g transform='translate(28,0) scale(-1,1)'><circle cx='14' cy='14' r='5' fill='%23ffffff' stroke='%23000000' stroke-width='1.4'/><circle cx='14' cy='4' r='2' fill='%23000000'/><circle cx='14' cy='24' r='2' fill='%23000000'/><circle cx='4' cy='14' r='2' fill='%23000000'/><circle cx='24' cy='14' r='2' fill='%23000000'/></g></svg>") 14 14, crosshair; cursor: var(--cursor-select);
+}
+
+:root{
+  --cursor-spark:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'><path d='M12 4 V8'/><path d='M12 16 V20'/><path d='M4 12 H8'/><path d='M16 12 H20'/><path d='M12 10 L14 12 L12 14 L10 12 Z'/></svg>") 16 16, crosshair;}
+.resize-handle {
+  pointer-events: auto;
+}
+ 
+ .page,
+.layer,
+canvas {
+  touch-action: none;
+  height: 100%;
+}
+ .container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+      overflow-x: hidden;
+       overflow-y: hidden;
+}
+ .tabs {
+  display: flex;
+  justify-content: center;      
+  align-items: center;
+  gap: 10px;                 
+  background: #e5e7eb;
+  padding: 10px 0;
+  border-bottom: 1px solid #ccc;
+}
+
+.tab {
+  padding: 10px 18px;
+  cursor: pointer;
+  border-radius: 10px;
+  transition: 0.25s;
+  background: #f3f4f6;
+  font-size: 16px;
+  font-weight: 600;
+  color: #374151;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+  width: 153px;
+    text-align: center;
+    font-weight: 700;
+  background: var(--bg); color: var(--ink);
+  transition: border-color .18s ease, box-shadow .18s ease, background .18s ease,
+             filter .18s ease, outline-color .18s ease;
+            font-size: 15px;
+}
+
+.tab:hover {
+  background: #e5e7eb;
+  transform: translateY(-2px);
+}
+ 
+ .tools-bar {
+  padding: 10px;
+  background: #fff;
+  border-bottom: 1px solid #ddd;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+ .tools-bar{
+  display: flex;
+ flex-wrap: wrap;
+ }
+ 
+.btn-21 {
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  background: #2563eb;
+  color: white;
+}
+
+ .hidden {
+  display: none;
+}
+
+ @media (max-width: 900px) {
+  .main-container {
+    grid-template-columns: 1fr;
+  }
+
+  .canvas-area {
+     height: 320px;  
+  }
+
+}
+  
+ .buttones ,.addQuestion,.addQuestionthree
+ {
+    font-weight: 700; padding:12px; background: linear-gradient(160deg, #d1d5db 0%,
+       #ffffff 30%, #bfc5cc 50%, #ffffff 70%, #a8b0b9 100%); 
+       color: #1f2937; text-shadow: 0 1px 0 rgba(255,255,255,.6);
+       border:none; border-radius:10px; 
+       font-size:16px;
+        cursor:pointer;
+        width:100%; display:inline-block; text-align:center; transition: transform 0.12s ease, box-shadow 0.12s ease; }
+    button:hover { transform:translateY(-2px); box-shadow:0 6px 14px rgba(0,0,0,0.08); }
+    button.active { box-shadow: inset 0 0 0 3px rgba(255,255,255,0.12), 0 6px 14px rgba(0,0,0,0.06); }
+ .cell { display: flex; align-items: center; justify-content: center; background: color-mix(in oklab, var(--panel) 94%, transparent);
+       border: 1px dashed color-mix(in oklab, var(--text) 12%, transparent); padding: 22px; border-radius: 14px; min-height: 90px; }
+
+    .btn { --btn-bg: #1f2937; 
+        --btn-bd: transparent;
+        --btn-shadow: 0 6px 16px rgba(0,0,0,.18); 
+        position: relative; display: inline-flex; 
+        align-items: center; 
+        justify-content: center; 
+        gap: .6ch;
+         padding: 12px 18px;
+          min-width: 160px; 
+          border-radius: 12px; 
+          border: 1px solid var(--btn-bd);
+           background: var(--btn-bg); color: var(--btn-ink); font-weight: 700; letter-spacing: .2px; text-decoration: none; cursor: pointer; box-shadow: var(--btn-shadow); transition: transform .22s ease, box-shadow .22s ease, background .22s ease, color .22s ease, border-color .22s ease, filter .22s ease; }
+    .btn-21:hover {
+       filter: contrast(1.05) }
+    .btn-21 { background: linear-gradient(160deg, #d1d5db 0%, #ffffff 30%, #bfc5cc 50%,
+       #ffffff 70%, #a8b0b9 100%); color: #1f2937; text-shadow: 0 1px 0 rgba(255,255,255,.6); }
+.tb-28{ color:transparent; 
+  background-image: linear-gradient(90deg,var(--brand1),var(--brand2));
+   -webkit-background-clip:text; 
+   background-clip:text;
+    border-color:#3b4b67 }
+.tb-28::placeholder{ color:transparent }
+.tb{
+  --bg: #dcdfe6;            
+  --ink: #0f131a;          
+  --ph: #8aa2c7;            
+  --bdc: var(--bd);      
+  --shadow: 0 10px 22px rgba(0,0,0,.25);
+  width:100%;
+   padding:12px 14px;
+   border-radius:12px; 
+   border:1px solid var(--bdc);
+   font-weight: 600;
+  background: var(--bg); color: var(--ink);
+  transition: border-color .18s ease, box-shadow .18s ease, background .18s ease,
+             filter .18s ease, outline-color .18s ease;
+            font-size: 15px;
+}
+  
+.canvas-wrapper {
+  display: flex;
+  flex-direction: column;
+  background: white;
+  /* border-right: 1px solid #ddd; */
+      overflow: auto;
+      height: 100%;
+}
+
+
+ 
+.controls{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+    position: sticky;
+    bottom: 10px;
+    background: rgba(255,255,255,0.98);
+    padding: 10px;
+    border-radius: 12px;
+    border: 1px solid #ddd;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+  padding: 12px;
+  background: #fff;
+  border-top: 1px solid #ccc;
+  display:flex;
+  justify-content: center;
+  gap:10px; 
+  z-index:99;
+} 
+
+  canvas { 
+  display:block; 
+  
+ border:2px solid #ccc; 
+  background:#fff;   width: 100%;
+height: 100%;
+  }
+  .canvaswrapper {
+  /* width:90%; */
+
+
+  height: 100%;
+  margin: auto;
+  
+  position: relative;
+
+  /* 🔥 الجديد */
+   aspect-ratio: 1 / 1;  
+
+   margin-right: 0;;
+     width:88%;
+
+  }  
+
+/* .canvaswrapper
+  {
+    width: 90%;
+    height: 100%;
+    margin: auto;
+    position: relative;
+     aspect-ratio: 1 / 1;
+    left: 0px;
+    margin-right: 0;
+} */
+.controls {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+     bottom: 10px;
+    background: rgba(255,255,255,0.98);
+    padding: 10px;
+    border-radius: 12px;
+    border: 1px solid #ddd;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+   z-index: 99;
+} 
+
+ 
+  .main-container {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  height: 100%;
+}
+ 
+ 
+@media (max-width: 600px) {
+  .tab {
+    width: auto !important;
+    padding: 8px 12px !important;
+    font-size: 15px !important;
+  }
+}
+h3{
+  margin: 10px;
+}
+@media (max-width: 1400px) {
+    .controls {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+@media (max-width: 1600px) {
+    .controls {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+ @media (max-width: 600px) {
+    .controls {
+        grid-template-columns: 1fr;
+    }
+}
+ @media (max-width: 600px) {
+    .tb-1 {
+       display: flex;
+       width: 70px;
+    }
+}
+  
+
+#wrapperLayer {
+ 
+    padding: 5px;
+    flex-direction: column;
+    justify-content: flex-start;
+    
+        width: 100%;
+    height: 100%;
+    border: 1px solid #ddd;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 5px;
+        direction: ltr
+}
+#wrapperLayer img {
+  width: 100%;            
+  height: auto;          
+  display: block;
+  margin-bottom: 5px;   
+   width: auto;
+  height: auto;
+  object-fit: contain;
+  display: block;
+}  
+   .canvasarea { flex:1; 
+      overflow-x:auto; 
+      overflow-y:auto; 
+      
+      background:#fff; 
+      border-radius:12px;
+       padding:10px;
+        border:1px solid #ddd; 
+        box-shadow:0 0 5px rgba(0,0,0,0.1); display:block; 
+      
+        position: relative;
+ 
+ 
+   overflow-y: hidden;
+     flex:1; 
+      overflow-x:auto; 
+      overflow-y:auto; 
+      background:#fff; 
+      border-radius:12px;
+       padding:10px;
+        border:1px solid #1a1717; 
+        box-shadow:0 0 5px rgba(0,0,0,0.1);
+          position: relative;
+ 
+  border: none;
+  margin-top: 5px;
+  overflow-y: hidden;
+  flex: 1;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: #fff;
+  border-radius: 12px;
+  padding: 10px;
+      display: inline-flex;
+
+      }  
+ .side-panel {
+    width: 100%;
+    background: #fff;
+    padding: 10px;
+    border-radius: 12px;
+    border: 1px solid #ddd;
+     box-shadow: 0 0 5px rgba(0,0,0,0.1);
+     height: 100%;
+         overflow-x: hidden;
+      
+         overflow-y: hidden;
+}
+
+.side-panel img {
+    width: 100%;
+    margin-top: 10px;
+    border-radius: 10px;
+    display: none;
+    height: 80%;
+}
+
+ 
+ .btn-disabled,
+button.disabled,
+button:disabled,
+button[disabled]{
+  cursor: not-allowed !important;
+  opacity: 0.55  !important ;
+  filter: grayscale(70%) !important ;
+  background: #e5e7eb  !important;      
+  color: #9ca3af  !important ;         
+  border-color: #d1d5db  !important;
+  box-shadow: none  !important;
+  pointer-events: none  !important;      
+}.tool-disabled {
+  pointer-events: none !important;
+  opacity: 0.45;
+  filter: grayscale(70%);
+  cursor: not-allowed !important;
+}
+
+.btn-active{
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: #ffffff;
+  border: 1px solid #15803d;
+  box-shadow: 0 6px 14px rgba(34, 197, 94, 0.35);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+ 
+ 
+.layer {
+    position: absolute;
+    border: 2px dashed #00aaff;
+     background: rgb(36 240 72 / 20%);
+    z-index: 10; 
+ }
+.tab[data-target="tab2"],
+.tab[data-target="tab3"] {
+   
+    opacity: 0.5;   
+    
+  
+}
+ 
+  
+
+.done {
+  background-color: #22c55e !important;
+  color: white !important;
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
+
+ .layer {
+  position: absolute;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+ .layer-1 {
+  border: 2px dashed #1976d2;
+  background-color: rgba(25, 118, 210, 0.25);
+}
+
+ .layer-2 {
+  border: 2px dashed #2e7d32;
+  background-color: rgba(46, 125, 50, 0.25);
+}
+
+ .layer-3 {
+  border: 2px dashed #ef6c00;
+  background-color: rgba(239, 108, 0, 0.25);
+}
+
+ .layer.selected {
+  outline: 3px solid red;
+}
+.layer-locked {
+  opacity: 0.6;
+}
+
+.layer-locked button {
+  /* pointer-events: none; */
+  filter: grayscale(100%);
+}
+
+.page {
+  position: relative;  
+  user-select: none;
+}
+ 
+ .modal-open .controlsMEDUM {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    width: 379px;
+    margin: 10px auto;
+    position: static;
+    margin-top: 20px;
+}
+ 
+.modalthree {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  z-index: 1000;
+  justify-content: center;
+  align-items: center;
+}
+
+.modalthree .modal-content {
+     background: #fff;
+    padding: 16px;
+    border-radius: 8px;
+    width: 70%;
+    max-height: 100%;
+    overflow-y: hidden;
+}
+
+.modalthree .controls{
+ display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    width: 379px;
+    margin: 10px auto;
+    position: static;
+    margin-top: 20px;
+}
+.modalthree .modal-content {
+    background: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    max-width: 838px;
+    max-height: 97%;
+    overflow: hidden;
+    margin-top: 7%;
+}
+.closeThree {
+    float: left;
+    font-size: 35px;
+    cursor: pointer;
+    color: red;
+    margin-top: -10px;
+}
+.close  {
+    float: left;
+    font-size: 35px;
+    cursor: pointer;
+    color: red;
+    margin-top: -10px;
+}
+.timer-box {
+  display: flex;            /* ليس inline-flex */
+  flex-direction: row;      /* تأكيد الاتجاه */
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  padding: 6px 14px;
+  border-radius: 10px;
+
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+ font-size: 16px;;
+  font-weight:bold;
+font-family: "MyArabic";
+ 
+  color: #111827;
+
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+}
+
+/* النقطة مخفية افتراضياً */
+.timer-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #22c55e;
+
+   transform: scale(0.6);
+  transition: all .25s ease;
+}
+
+.timer-text {
+  min-width: 52px;
+  letter-spacing: 1px;
+}
+ 
+#board.recording ~ .timer-box .timer-dot {
+  opacity: 1;
+  transform: scale(1);
+  background: #22c55e;
+}
+
+ #board.paused ~ .timer-box .timer-dot {
+  opacity: 0;
+} 
+
+.tool-disabled {
+  pointer-events: none !important;
+  opacity: 0.45 !important;
+  filter: grayscale(70%) !important;
+  cursor: not-allowed !important;
+}
+
+
+.timer-yellow { background: #facc15; }  
+.timer-red    { background: #ef4444; }  
+.timer-black  { background: #000000; }  
+.layer-actions {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #ffffff;
+  padding: 18px;
+  border-radius: 14px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+  z-index: 9999;
+  width: 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.layer-actions.hidden {
+  display: none;
+}
+
+.layer-actions .layer-title {
+  font-size: 16px;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.layer-actions button {
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+   font-size: 15px;
+  font-weight: 700;
+  background: linear-gradient(160deg,#d1d5db,#ffffff);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.layer-actions button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(0,0,0,0.15);
+}
+.hidden {
+  display: none !important;
+}
+ 
+ .modal-content {
+    background: #fff;
+    padding: 16px;
+    border-radius: 8px;
+    width: 70%;
+    max-height: 100%;
+    overflow-y: hidden;
+}
+canvas { touch-action: none; }
+#board.paused {
+  border: 3px solid #ef4444;        
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.15);
+  cursor: not-allowed;
+}
+#board.recording {
+  border: 3px solid #22c55e;  
+  box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.18);
+  cursor: crosshair;
+}
+#highlightBtn{ background-color:none;}
+
+
+ #board.locked {
+  border: 3px solid #9ca3af;
+  box-shadow: 0 0 0 4px rgba(156, 163, 175, 0.15);
+  cursor: not-allowed;
+  filter: grayscale(0.3);
+  background:0 0 0 4px rgba(156, 163, 175, 0.15) ;
+ 
+ 
+}
+
+
+ 
+.layerers-header {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #f8fafc, #eef2ff);
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.06);
+  margin: 0 auto;
+  width: 100%;
+
+  position: sticky;    
+  top: 0;             
+  z-index: 10;         
+}
+
+ .layer-badge {
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: #262215;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+ .layer-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: #1f2937;
+  margin: 0;
+  line-height: 1;
+  white-space: nowrap;
+}
+ 
+.badgeinfo {
+    display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+ 
+  border-radius: 12px;
+  padding:13px 14px;
+
+ 
+    text-align: center;
+ 
+  transition: all .25s ease;
+
+
+
+     background: #f8fafc;
+    border: 1px solid #e5e7eb;
+     font-size: 14px;
+    font-weight: 600;
+    color: #111827;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05)
+}
+
+.layer-badge-box:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px rgba(37, 99, 235, 0.35);
+}
+
+.activees {
+  background: #d6d6d6 !important;
+  color: rgb(235, 235, 235)!important;;
+  border-radius: 6px;
+ }
+.crop-layer {
+  border: 2px dashed #3b82f6;
+  background: rgba(59,130,246,0.12);
+  pointer-events: none; /* مهم */
+  z-index: 9999;
+}
+.shapepenExpection {
+ 
+      color: #531212ab;
+    transform: rotate(52deg) scaleX(-1);
+    transform-origin: center;
+       width: 39px;
+    height: 21px;
+}
+.shapepenExpection .pen-tip {
+  fill: #000000;    /* لون رأس السِنّة */
+}
+.pen-tip {
+  stroke: #000;
+  stroke-width: 0.6;
+}
+.pro-dropdown {
+    width: 90%;
+    padding: 10px;
+    margin: 15px 0;
+    font-size: 16px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    margin-right: 20px;
+
+}
+.content-box {
+  display: none;              /* كلها مخفية بالبداية */
+  background: #e0f2fe;
+  padding: 15px;
+  border-radius: 10px;
+  margin-top: 10px;
+} 
+
+ 
+#treeTowCatogeris {
+  margin-top: 20px;
+  padding: 10px;
+}
+
+ .q-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 14px;
+  margin-bottom: 15px;
+  border: 1px solid #e5e7eb;
+  transition: all 0.3s ease;
+}
+
+ .q-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 15px;
+}
+
+ .q-index {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #2563eb;
+  color: white;
+  border-radius: 50%;
+  font-weight: bold;
+}
+
+ .q-text {
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+}
+
+ .shape-box,.shape-boxTow {
+  width: 150px;
+  height: 100px;
+  border: 2px dashed #93c5fd;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f0f9ff;
+  font-size: 14px;
+}
+
+ .q-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.q-actions button {
+  border: none;
+  padding: 8px 10px;
+  border-radius: 10px;
+   background: #f3f4f6;
+  transition: 0.2s;
+}
+
+.q-actions button:hover {
+  background: #e0e7ff;
+}
+
+ .opt-rowTow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+ .opt-boxTow {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #eef2ff;
+}
+
+ .opt-inputTow {
+  width: 100%;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid #dbeafe;
+  font-size: 16px;
+  outline: none;
+  transition: 0.2s;
+}
+
+.opt-inputTow:focus {
+  border-color: #2563eb;
+}
+.opt-box,.opt-boxTow  {
+    width: var(--shape-option);
+    height: var(--shape-option);
+}
+.opt-box,.opt-boxTow  {
+    flex-shrink: 0;
+    border-radius: 12px;
+    background: rgba(59, 130, 246, .14);
+    border: 2px dashed rgba(59, 130, 246, .65);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* overflow: hidden; */
+    user-select: none;
+    color: #1f3a8a;
+    font-weight: 700;
+    font-size: 12px;
+}
+ .opt-childrenTow {
+  margin-left: 40px;
+  padding-left: 10px;
+  border-left: 2px solid #bfdbfe;
+}
+
+ .collapsed .subtree {
+  display: none;
+}
+
+ .is-attach-target {
+  border-color: #22c55e !important;
+  background: #f0fdf4 !important;
+}
+
+ 
+ 
+/* .activeBtn {
+  
+     background: linear-gradient(135deg, #22c55e, #16a34a) !important;
+  color: #ffffff !important;
+  border: 1px solid #15803d !important;
+  box-shadow: 0 6px 14px rgba(34, 197, 94, 0.35) !important;
+  cursor: pointer;
+  transition: all 0.2s ease;
+    
+    
+ } */
+.infoX{
+  display: inline-block;
+  width: 90px;
+}
+
+.headerBar{
+  display: inline-block;
+}
+
+.question-actions{
+     display: flex;
+    gap: 12px;
+    margin: 16px 0;
+    flex-wrap: wrap;
+    margin: auto;
+        DISPLAY: contents;
+}
+ .btn-action{
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  padding:12px 20px;
+  border-radius:14px;
+  font-size:16px;
+  font-weight:800;
+  border:none;
+   transition:
+    transform .18s ease,
+    box-shadow .18s ease,
+    background .18s ease;
+  box-shadow:0 6px 16px rgba(0,0,0,.12);
+}
+@media (max-width: 768px){
+  .question-actions{
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .question-actions button{
+    width: 100%;
+  }
+}
+ .btn-action .icon{
+  font-size:18px;
+  line-height:1;
+}
+
+ .btn-action.add{
+  background:linear-gradient(135deg,#2563eb,#1d4ed8);
+  color:#fff;
+}
+.btn-action.add:hover{
+  transform:translateY(-2px);
+  box-shadow:0 10px 22px rgba(37,99,235,.35);
+}
+
+ .btn-action.save{
+  background:linear-gradient(135deg,#16a34a,#15803d);
+  color:#fff;
+}
+.btn-action.save:hover{
+  transform:translateY(-2px);
+  box-shadow:0 10px 22px rgba(22,163,74,.35);
+}
+
+ .btn-action:active{
+  transform:scale(.96);
+}
+ 
+/* ===== وضع القص ===== */
+body.crop-mode {
+cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24'><g transform='rotate(-90 12 12)'><path fill='red' d='M9.64 7.64a3 3 0 1 0-4.28-4.28a3 3 0 0 0 4.28 4.28 M5.36 19.64a3 3 0 1 0 4.28-4.28a3 3 0 0 0-4.28 4.28 M21 4L8.7 16.3l1.4 1.4L22.4 5.4L21 4 M8.7 7.7L21 20l1.4-1.4L10.1 6.3L8.7 7.7'/></g></svg>") 16 2, auto;
+}
+
+/* الخلفية السوداء الشفافة على التاب النشط فقط */
+body.crop-mode .canvas-wrapper:not(.hidden) {
+  position: relative;
+}
+
+/* Overlay */
+body.crop-mode .canvas-wrapper:not(.hidden)::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45); /* أسود شفاف */
+  z-index: 50;
+ }
+
+ body.crop-mode canvas {
+  position: relative;
+  z-index: 60;
+}
+
+ #backBtn {
+  background: rgba(239, 68, 68, 0.15); /* أحمر شفاف أنيق */
+  color: #b91c1c;                      /* نص أحمر غامق */
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  backdrop-filter: blur(4px);
+  
+  border-radius: 14px;
+  padding: 10px 18px;
+  font-weight: 800;
+ 
+  transition:
+    background 0.25s ease,
+    color 0.25s ease,
+    box-shadow 0.25s ease,
+    transform 0.15s ease;
+}
+
+ .field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field-label {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.training-select {
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1.5px solid #d1d5db;
+    font-size: 15px;
+    background: #fff;
+     margin-left: 3%;
+    margin-right: 2%;
+    font-size: 14;
+    font-weight: bolder;
+  }
+  .training-select option{
+       font-size: 14;
+    font-weight: bolder;
+  }
+.training-select:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+.training-select.field-error {
+  border-color: #ef4444;
+  background: #fff5f5;
+}
+ 
+ @media (max-width: 900px) {
+
+ 
+
+  body.medu-canvas-auto .container {
+    overflow: visible;
+    height: auto;
+    min-height: 100vh;
+  }
+
+  body.medu-canvas-auto .main-container {
+    overflow: visible;
+  }
+
+  body.medu-canvas-auto .canvasarea {
+    overflow-y: visible;
+    height: auto;
+    min-height: 100%;
+  }
+
+  body.medu-canvas-auto canvas {
+    display: block;
+  }
+}
+#backBtn {
+    background: rgb(225 218 224 / 0%);
+    color: #b91c1c;
+    border: 1px solid rgb(29 28 28 / 35%);
+    backdrop-filter: blur(4px);
+    border-radius: 14px;
+    padding: 10px 18px;
+    font-weight: 800;
+ 
+    height: 49px;
+    width: 73%;
+    /* margin-top: 17%; */
+    /* margin-right: px; */
+}
+.question-top-bar {
+  position: fixed;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+
+  padding: 10px 16px;
+  border-radius: 14px;
+
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+
+  border: 1px solid rgba(0,0,0,0.08);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+
+  z-index: 10000;
+}
+
+
+ .q-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  border: none;
+  background: rgba(37, 99, 235, 0.12);
+  color: #2563eb;
+
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-weight: 800;
+  cursor: pointer;
+
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.q-back-btn:hover {
+  background: rgba(37,99,235,0.22);
+  transform: translateX(-2px);
+}
+
+ .q-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 800;
+  color: #1f2937;
+}
+
+.q-label {
+  opacity: 0.7;
+  font-size: 14px;
+}
+
+#qTitleText {
+  background: #2563eb;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 14px;
+}
+
+ .hidden {
+  display: none !important;
+}
+
+.qNumber {
+  font-weight: 800;
+  color: #2563eb;
+  margin: 0 6px;
+}
+ 
+ .konva-editor{
+    position:absolute;
+    margin:0;
+    padding:0;               /* نخلي padding صفر ونضبطه من JS */
+    border:none;
+    outline:none;
+    overflow:hidden;
+    background:transparent;
+    box-sizing:border-box;
+    transform-origin: top left;
+    white-space: pre-wrap;
+    word-break: break-word;
+    line-height: 1.3;
+    caret-color:#050404;
+  }
+math-field {
+  width: 100%;         
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;     
+}
+math-field::part(content) {
+  white-space: pre-wrap;       
+  word-break: break-word;      
+  overflow-wrap: break-word;   
+  max-width: 100%;
+}
+
+math-field {
+  max-width: 100%;
+}
+ 
+ .div-disabled {
+  pointer-events: none;     
+  opacity: 0.5;            
+  cursor: not-allowed;
+}
+
+
+ .recording-btn {
+  position: relative;
+   border: 2px solid #ef4444 !important;  
+   transition: all 0.3s ease;
+}
+
+ .recording-btn::after {
+  content: "";
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  background: #ef4444;
+  border-radius: 50%;
+top: 52%;
+      left: 67%;
+  transform: translate(-50%, -50%);
+  animation: pulseRecord 1.2s infinite ease-in-out;
+}
+.recording-btn.paused::after {
+  animation: none;
+  background: #ef4444;
+  transform: translate(-50%, -50%) scale(1);
+}
+ @keyframes pulseRecord {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+    background: #ef4444;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.4);
+    opacity: 0.5;
+    background: #dc2626;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+    background: #ef4444;
+  }
+}   
+
+
+
+ 
+
+ 
+
+ 
+.timer-dot{
+  width:10px;
+  height:10px;
+  border-radius:50%;
+  background:#16a34a;
+}
+.timer-status{
+  font-family: system-ui;
+  font-size:16px;
+  font-weight:700;
+  letter-spacing:.2px;
+  text-shadow:0 1px 0 rgba(255,255,255,.6);
+}
+
+/* حالة التسجيل */
+.timer-recording{
+  animation: recordBlink 1s linear infinite;
+}
+
+@keyframes recordBlink{
+
+  0%{
+    border-color:#16a34a;
+  }
+
+  50%{
+    border-color:transparent;
+  }
+
+  100%{
+    border-color:#16a34a;
+  }
+
+}
+
+.timer-recording .timer-dot{
+  background:#16a34a;
+}
+
+/* حالة الإيقاف */
+.timer-paused{
+  animation: pauseBlink 1s linear infinite;
+}
+
+@keyframes pauseBlink{
+
+  0%{
+    border-color:#ef4444;
+  }
+
+  50%{
+    border-color:transparent;
+  }
+
+  100%{
+    border-color:#ef4444;
+  }
+
+}
+
+.timer-paused .timer-dot{
+  background:#ef4444;
+}
+</style>
+
+</head>
+<body>
+ <div id="saveOverlay" class="save-overlay hiddenSAve">
+  <div class="save-box">
+    <div class="spinner"></div>
+    <div class="save-text">جاري حفظ البيانات...</div>
+  </div>
+</div>
+<div class="toolsbarDISABLE" id="drawTools">
+<div class="container" >
+
+     <div class="tabs hidden" >
+        <div class="tab active" data-target="tab1">الدرس</div>
+        <div class="tab" data-target="tab2">تاكد</div>
+        <div class="tab" data-target="tab3">تدرب</div>
+        <div class="tab" data-target="tab4"></div>
+    </div>
+
+ <div class="main-container">
+        
+ 
+
+
+     <div class="side-panel">
+     
+      <button class="buttones" id="openImage">اختر صورة</button>
+     
+
+      <div id="wrapperLayer">
+      <img id="preview" src="" alt="" />
+
+      </div>
+<input type="file" id="imageInput" accept="image/*" hidden multiple>
+  </div>
+
+
+   <div class="canvas-wrapper" id="tab1">
+  <div class="tab-overlay" id="tab1Overlay">
+  <div class="overlay-content">
+    الرجاء البدء في   تحديد الطبقة   ✋
+  </div>
+</div>
+ 
+
+
+<div id="backBtn" class="question-top-bar hidden">
+  <button id="questionBackBtn" class="q-back-btn  ">
+    <svg viewBox="0 0 24 24" width="20" height="20">
+      <path d="M15 18l-6-6 6-6"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"/>
+    </svg>
+    <span>رجوع</span>
+  </button>
+
+  <div class="q-title">
+    <span class="q-label"> شرح السؤال      </span>
+       <span class="qNumber"></span>
+    <div class="qTitleText"></div>
+  </div>
+</div>
+
+
+            <!-- HEADER -->
+            <div class="toolsbar">
+                            
+  
+                 
+              <div class="printOne">
+ 
+<div class="timer-box" id="timerBox">
+
+  <span class="timer-status" id="timerStatus"> </span>
+  <span class="timer-dot" id="timerDot"></span>
+
+  <span class="timer-text" id="timerText">00:00</span>
+
+
+</div>
+
+<div class="badgeinfo" id="infoLayers"></div>
+
+ 
+          
+ 
+
+<div  id="backBtn"  class="question-header  hidden"  >
+  <button class="question-back" title="الرجوع">
+    <svg viewBox="0 0 24 24" width="20" height="20">
+      <path d="M15 18l-6-6 6-6"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"/>
+    </svg>
+    <span class="back-text">رجوع</span>
+  </button>
+
+  <div class="question-title">
+    <span class="question-label">السؤال</span>
+    <span class="question-index">1</span>
+       <span class="questionText">1</span>
+  </div>
+
+</div>
+
+               </div>
+   <div class="perintTow">
+    <button class="bten btn-21" id="startRec">  تسجيل 
+
+  </button>
+
+<button class="bten btn-21" id="pauseRec" disabled>⏸️ إيقاف مؤقت</button>
+    
+      <button class="bten btn-231" id="stopRec" disabled>⏹️ إيقاف</button>
+      <button class="bten btn-231" id="resumeRec" disabled>      ▶️استئناف
+      </button>
+      <!-- <button class="bten btn-231" id="retern" disabled>🔁اعادة التشغيل </button> -->
+      <button class="bten btn-231" id="saveBtn" disabled>💾 حفظ</button>
+       <button class="bten btn-231" id="deletBtn" disabled>  🗑
+حذف</button>
+   </div>
+  
+     
+            </div>
+
+
+            <!-- CANVAS AREA -->
+ <div class="canvasarea" id="canvasarea">   
+ <div id="replayBar" class="replay-bar hidden">
+    <button id="replayPause">▶️</button>
+    <span id="replayTime">00:00</span>
+    <input
+      type="range"
+      id="replaySeek"
+      min="0"
+      max="100"
+      value="0"
+      step="0.1"
+    />
+  </div>
+      <div class="canvaswrapper">
+    <canvas id="board"></canvas>
+    
+  <svg id="mindmapSvg"></svg>
+  <div id="mindmapLayer"></div>
+</div>
+
+            <div class="sidebar">  
+                <div class="tools-grid">
+ 
+ 
+
+<div class="toolprent  " id="openPenTool">
+  <div class="tool-icon">
+    <svg xmlns="http://www.w3.org/2000/svg"
+         width="32" height="32"
+         viewBox="0 0 32 32">
+      <g transform="translate(0 32) scale(1 -1) rotate(-35 16 16)">
+        <rect x="13" y="4" width="6" height="18" rx="2"
+              fill="#22c55e" stroke="#000" stroke-width="1"/>
+        <polygon points="13,4 19,4 16,0"
+                 fill="#166534"/>
+        <rect x="13" y="22" width="6" height="6"
+              fill="#14532d"/>
+      </g>
+    </svg>
+  </div>
+  <div class="tool-label">الأدوات</div>
+</div>
+
+<div class="toolprent  "    id="highlightBtn">
+  <span class="tool-icon   "  >
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="32" height="32"
+     viewBox="0 0 32 32">
+  <g transform="translate(0 32) scale(1 -1) rotate(-35 16 16)">
+    <rect x="11" y="6" width="10" height="14" rx="3"
+          fill="#f59e0b" stroke="#000" stroke-width="1"/>
+    <rect x="11" y="20" width="10" height="6"
+          fill="#fde68a" stroke="#000" stroke-width="1"/>
+    <polygon points="11,6 21,6 16,1"
+             fill="#b45309"/>
+  </g>
+</svg>
+  </span>
+  <div class="tool-label">قلم الشرح</div>
+</div>
+
+   
+ 
+ 
+ <div class="toolprent  " id="openShapesBtn">
+  <div class="tool-icon">
+<svg viewBox="0 0 24 24" width="26" height="26">
+  <circle cx="7" cy="7" r="3" fill="#3b82f6"/>
+  <rect x="12" y="4" width="6" height="6" rx="1.5" fill="#22c55e"/>
+  <polygon points="7,17 10,12 13,17" fill="#f59e0b"/>
+</svg>
+  </div>
+  <div class="tool-label"> العناصر   </div>
+</div>
+
+ <div class="toolprent "  id="btnClearPause"  >
+  <div class="tool-icon">
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 24 24"
+     width="22"
+     height="22"
+     fill="none">
+
+  <path d="M3 6h18"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"/>
+
+  <path d="M8 6V4h8v2"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"/>
+
+  <rect x="6" y="6" width="12" height="14" rx="2"
+        stroke="currentColor"
+        stroke-width="2"
+        fill="currentColor"
+        opacity="0.15"/>
+
+  <path d="M10 11v6"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"/>
+
+  <path d="M14 11v6"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"/>
+
+</svg>
+ 
+  </div>
+  <div class="tool-label"> الحذف   </div>
+</div>
+
+
+
+ <div class="toolprent  "  id="smartLineOpenBtn">
+  <div class="tool-icon"   >
+      <svg viewBox="0 0 24 24" width="22" height="22">
+  
+  <path d="M4 16C8 4 16 20 20 8"
+        fill="none"
+        stroke="#334155"
+        stroke-width="2"
+        stroke-linecap="round"/>
+
+  <circle cx="4" cy="16" r="1.6" fill="#2563eb"/>
+  <circle cx="20" cy="8" r="1.6" fill="#2563eb"/>
+
+</svg>
+  </div>
+  <div class="tool-label"> الرسم الحر    </div>
+</div>
+
+ <div class="toolprent  " id="gridMajorBtnOpen">
+  <div class="tool-icon">
+ <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+     viewBox="0 0 24 24" fill="none">
+
+  <rect x="3.5" y="3.5" width="17" height="17" rx="4"
+        fill="#0f172a" stroke="#334155" stroke-width="1.6"/>
+
+  <path d="M8 4v16M16 4v16M4 8h16M4 16h16"
+        stroke="#cbd5f5"
+        stroke-width="1.4"
+        stroke-linecap="round"
+        opacity="0.9"/>
+</svg>
+  </div>
+  <div class="tool-label"> الشبكة  </div>
+</div>
+   
+ <div class="toolprent " id="textToolpenBtn" >
+  <div class="tool-icon" >
+<svg viewBox="0 0 24 24" width="22" height="22">
+
+  <rect x="3" y="3" width="18" height="18" rx="4"
+        stroke="currentColor"
+        stroke-width="1.6"
+        fill="none"/>
+
+  <path d="M6 8h12M12 8v9"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"/>
+
+</svg>
+  </div>
+  <div class="tool-label"> النص  </div>
+</div>
+
+ <div class="toolprent "  id="btnCreateMindMap">
+  <div  class="tool-icon" >
+  <svg aria-hidden="true"
+     viewBox="0 0 24 24"
+     fill="#111"
+     width="24"
+     height="24">
+
+  <path d="M18.5 2A2.5 2.5 0 0 1 21 4.5v3a2.5 2.5 0 0 1-2.5 2.5h-3A2.5 2.5 0 0 1 13 7.5V6h-3a2.999 2.999 0 0 0-2.826 2H7.5a2.5 2.5 0 0 1 2.5 2.5v3A2.5 2.5 0 0 1 7.5 16H7a2 2 0 0 0 2 2h4v-1.5a2.5 2.5 0 0 1 2.5-2.5h3a2.5 2.5 0 0 1 2.5 2.5v3a2.5 2.5 0 0 1-2.5 2.5h-3a2.501 2.501 0 0 1-2.45-2H9a4 4 0 0 1-4-4h-.5A2.5 2.5 0 0 1 2 13.5v-3A2.5 2.5 0 0 1 4.5 8h.6A5.003 5.003 0 0 1 10 4h3.05a2.5 2.5 0 0 1 2.45-2h3Zm-3 14a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3Zm-11-6a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3Zm11-6a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3Z"
+        clip-rule="evenodd"></path>
+</svg>
+  </div>
+  <div class="tool-label"> المخطط الذهني   </div>
+</div>
+  
+ 
+ 
+ 
+
+ 
+ 
+
+  </div>
+
+</div>
+
+
+   
+            </div>
+
+        </div>
+    <!-- Tabe2------------------------------------------------------------------- -->
+  <div class="canvas-wrapper hidden" id="tab2">
+   
+
+     <div class="layerers-header">
+  <div class="layer-badge" id="infoLayerstow"></div>
+
+ <div class="question-actions">
+ <div class="field">
+ 
+
+  <select class="training-select" required>
+    <option value="" disabled selected>اختر نوع التدريب</option>
+    <option value="move">تدريب عادي  </option>
+    <option value="scale"> تدريب عالي  </option>
+   </select>
+</div>
+
+  <button class="btn-action save" id="SavAll">
+    <span class="icon">💾</span>
+    <span class="text">حفظ الكل</span>
+  </button>
+ 
+ 
+
+</div>
+
+
+ 
+</div>
+<div class="q-tabs">
+  <button class="q-tab active" data-type="text">📝 سؤال نصي</button>
+  <button class="q-tab" data-type="image">  🖼️    سؤال نصي + صورة </button>
+</div>
+
+
+  
+<div class="qb">
+
+<!-- ===== Question Template ===== -->
+<template id="questionTpl">
+<section class="q-card enter">
+
+  <div class="q-top">
+    <div class="q-index"></div>
+    
+  </div>
+
+  <div class="q-body">
+
+    <div class="q-row">
+      <!-- <textarea class="q-text"  placeholder="   اكتب  نص السؤال هنا.. "  ></textarea> -->
+        <math-field    class="q-text"  default-mode="text"  placeholder="\text{   اكتب  نص السؤال هنا }"     
+    virtual-keyboard-mode="off"
+   >
+    
+  </math-field>
+
+<input type="hidden" class="question-explain" data-qid="q_123">
+
+      <div class="q-image">
+         <button class="q-image-remove">✖</button>
+        <span class="q-image-icon">🖼️</span>
+        <span class="q-image-text">     (قص / لصق)</span>
+      </div>
+
+    </div>
+
+    <div class="answers-header">
+      <span  class="col-hide" > إخفاء النص </span>
+          <span > اختار  الإجابة </span>
+     
+      <span></span>
+      <span></span>
+      <span> </span>
+    </div>
+
+    <div class="answersList"></div>
+    
+    <button class=" add-answer">➕ جديد</button>
+
+  </div>
+
+  <div class="q-bottom">
+    <!-- <button class="btn ghost">👁️ إخفاء</button> -->
+    <button class="btn  ghost  explain">▶️ شرح</button>
+    <button class="btn danger delete-question">🗑️ حذف</button>
+
+      <button class="btn primary add-Qution" id="addQuestionBtn">➕   اضافة سؤال   </button>
+  </div>
+
+</section>
+</template>
+
+
+
+ <template id="answerTpl">
+<div class="answer-row">
+<!-- صحيحة -->
+<label class="chk chk-correct">
+  <input type="checkbox">
+  <span class="chk-ui"></span>
+</label>
+
+ <label class="chk chk-hide">
+  <input type="checkbox">
+  <span class="chk-ui"></span>
+</label>
+
+
+ 
+   <math-field    class="answer-text"   placeholder="\text{   نص الإجابة}"       default-mode="text"
+    virtual-keyboard-mode="off"  
+    >
+  </math-field>
+
+   <div class="answer-thumb">🖼️</div>
+
+  <span class="answer-delete">🗑️</span>
+
+</div>
+
+</template>
+
+</div>
+</div>
+   
+   <div class="canvas-wrapper hidden" id="tab3">
+        
+<div class="layerers-header">
+  <div class="layer-badge" id="infoLayersthree"></div>
+
+  <h2 class="layer-title">تدريب عالي</h2>
+
+</div>
+  <h5 class="layer-subtitle">أضف سؤال جديد</h5>
+
+    <div class="input-area2">
+        <input id="mainInputThree" type="text" placeholder="اكتب السؤال هنا" />
+         <div class="subcalss">
+        <button class="addQuestionthree"  onclick="addQuestionThree()" >➕إضافة</button>
+          <button class="addQuestionthree">📥  حفظ</button>
+          </div>
+    </div>
+
+    <ul id="treeThree"></ul>
+ 
+        </div>
+
+
+
+
+ <div class="canvas-wrapper hidden" id="tab4">
+            <div class="layerers-header">
+  <div class="layer-badge" id="infoLayersFuer"></div>
+
+  <h2 class="layer-title"> الأسئلة التفاعلية</h2>
+
+</div>
+  <div class="wrap">
+
+    <!-- إدخال سؤال جديد -->
+    <div class="header">
+      <div class="field">
+        <textarea   id="qInputCatogeres" type="text" placeholder="اكتب السؤال هنا..."  ></textarea>
+      </div>
+
+    
+  <button id="cropModeBtn" class="tool-btn">
+   تفعيل 
+</button>
+
+<button id="cropModeBtn">  قص</button>
+
+      <button class="  btn-blue addQuestionCatogeresBtn" id="addQuestionCatogeresBtn">➕ إضافة سؤال</button>
+      <button class="  btn-ghost addQuestionCatogeresBtn" id="SaveQutionBtn">🧾   حفظ </button>
+    </div>
+ 
+    <div id="treeCatogeris"></div>
+
+  </div>
+ 
+        </div>
+
+    </div>
+
+</div>
+</div>
+ 
+ 
+ 
+ 
+ 
+ 
+<div id="output" hidden></div>
+<div id="alertBox" hidden ></div>
+
+ 
+ <div id="lesson"></div>
+
+  
+
+<div class="modals-actions hidden" id="modals">
+
+  <!-- CARD -->
+  <div class="modal-card">
+
+    <h3 class="modals-title"></h3>
+
+    <p class="modals-message"></p>
+
+    <div class="modal-buttons">
+      <button class="btn-cancel" id="cancelDelete">إلغاء</button>
+      <button class="btn-danger" id="confirmDelete">حذف التسجيل</button>
+    </div>
+
+  </div>
+
+</div>
+
+
+<!-- model Type Quytion  -->
+<div id="cropConfirm" class="crop-confirm hidden">
+  <div class="crop-card">
+   
+    <h3>هل تريد قص الصوره؟</h3>
+     <div class="crop-actions">
+      <button id="cropYes" class="btn-confirm yes"> نعم  </button>
+      <button id="cropNo"  class="btn-confirm no"> لا   </button>
+    </div>
+  </div>
+</div>
+ <!-- sideTools -->
+ 
+
+   <div id="mindMapModal" class="modal-overlay hidden">
+
+  <div class="modal-box">
+
+ 
+    <div class="modal-body">
+      <label>  عدد الفروع   </label>
+      <input id="mindMapCount" type="number" min="1" max="10" value="3">
+    </div>
+
+    <div class="modal-actions">
+      <button id="btnMindCancel" class="modal-btn cancel">إلغاء</button>
+      <button id="btnMindCreate" class="modal-btn create">إنشاء</button>
+    </div>
+
+  </div>
+</div>
+
+ 
+
+  
+
+
+<div id="toolFlyout" class="tool-flyout">
+
+<div class="flyout-header">
+
+  
+
+  <div class="flyout-tools" id="flyoutTools">
+    <!-- تظهر فقط مع shapes -->
+  </div>
+
+
+<div id="flyoutActionsId" class="flyout-actions hidden">
+   
+
+</div>
+ 
+
+
+ 
+
+
+
+  <span class="flyout-close" id="closeFlyout">✕</span>
+    
+
+</div>
+
+  <div class="flyout-content">
+
+    <!-- أدوات القلم -->
+    <div class="tool-panel" data-tool="openPenTool">
+      <span class="tool  tool-btn" id="eraserBtn"  >
+<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 32 32">
+  <g transform="translate(0 32) scale(1 -1) rotate(-25 16 16)">
+    <rect x="8" y="8" width="16" height="10" rx="3"
+          fill="#fca5a5"
+          stroke="#000"
+          stroke-width="1"/>
+    <rect x="8" y="18" width="16" height="6" rx="2"
+          fill="#e5e7eb"
+          stroke="#000"
+          stroke-width="1"/>
+  </g>
+</svg></span>
+ 
+   
+
+  <span class="tool tool-btn" id="penExpetion">
+   
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="32" height="32"
+     viewBox="0 0 32 32">
+  <g transform="translate(0 32) scale(1 -1) rotate(-35 16 16)">
+    <rect x="13" y="4" width="6" height="18" rx="2"
+          fill="#f4c430" stroke="#000" stroke-width="1"/>
+    <polygon points="13,4 19,4 16,0"
+             fill="#8b5a2b"/>
+    <rect x="13" y="22" width="6" height="6"
+          fill="#333"/>
+  </g>
+</svg>
+
+ 
+</span>
+
+  <span class="tool tool-btn"> <input type="color" id="colorPicker" value="#000000" /> </span>
+ 
+<span class="tool tool-btn tool-select">
+  <select id="brushSize" class="brush-select">
+    <option value="2">2</option>
+    <option value="3" selected>3</option>
+    <option value="4">4</option>
+    <option value="6">6</option>
+    <option value="8">8</option>
+    <option value="10">10</option>
+    <option value="12">12</option>
+    <option value="16">16</option>
+    <option value="18">18</option>
+  </select>
+</span>
+
+    </div>
+
+     <div class="tool-panel" data-tool="smartLineOpenBtn">
+<div class="tool  tool-btn" id="smartLineBtn">
+  <svg xmlns="http://www.w3.org/2000/svg"
+       width="22"
+       height="22"
+       viewBox="0 0 24 24"
+       fill="none"
+       stroke="#6b7280"
+       stroke-width="1.6"
+       stroke-linecap="round"
+       stroke-linejoin="round">
+
+    <path d="M12 4 V8"/>
+    <path d="M12 16 V20"/>
+    <path d="M4 12 H8"/>
+    <path d="M16 12 H20"/>
+    <path d="M12 10 L14 12 L12 14 L10 12 Z"/>
+
+  </svg>
+</div>
+     <div  class="tool   tool-btn">   <input type="color" id="ColorSmartLineBtn" /> </div>
+     </div>
+
+
+    <div class="tool-panel" data-tool="gridMajorBtnOpen">
+          <span id="gridMajorBtn"   class="tool  tool-btn">
+<svg width="48" height="48" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+ 
+  <rect x="6" y="6" width="36" height="36" rx="2"
+        fill="#e6e6e6"
+        stroke="#6f6f6f"
+        stroke-width="2"/>
+
+ 
+  <line x1="15" y1="6" x2="15" y2="42" stroke="#8a8a8a" stroke-width="1"/>
+  <line x1="24" y1="6" x2="24" y2="42" stroke="#8a8a8a" stroke-width="1"/>
+  <line x1="33" y1="6" x2="33" y2="42" stroke="#8a8a8a" stroke-width="1"/>
+
+ 
+  <line x1="6" y1="15" x2="42" y2="15" stroke="#8a8a8a" stroke-width="1"/>
+  <line x1="6" y1="24" x2="42" y2="24" stroke="#8a8a8a" stroke-width="1"/>
+  <line x1="6" y1="33" x2="42" y2="33" stroke="#8a8a8a" stroke-width="1"/>
+</svg>
+</span>
+        <div id="gridZoomOut" class=" tool tool-btn">➖</div>
+    <div id="gridZoomIn"  class=" tool tool-btn">➕</div>
+     <div  class="tool-btn">   <input type="color" id="fillPickerColor" /> </div>
+
+    </div>
+ 
+    <div class="tool-panel" data-tool="textToolpenBtn">
+  
+<span class="tool tool-btn " id="textToolBtn">
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="22"
+     height="22"
+     viewBox="0 0 24 24"
+     fill="none"
+     stroke="#374151"
+     stroke-width="2.6"
+     stroke-linecap="round"
+     stroke-linejoin="round">
+
+  <!-- الخط العلوي -->
+  <path d="M3 6 H21"/>
+
+  <!-- الخط العمودي -->
+  <path d="M12 6 V19"/>
+
+</svg>
+</span>
+ 
+
+     <button class=" tool tool-btn bold" data-style="bold">B</button>
+    <button class=" tool tool-btn italic" data-style="italic">I</button>
+    <button id="underlineBtn"  class="tool-btn tool underline-btn"  data-style="underline">U</button>
+    <span class="tool  tool-btn ">   <input type="color" id="textColor" /> </span>
+ 
+
+
+<span class="tool tool-btn tool-select">
+  <select id="fontSize" class="brush-select">
+    <option value="12">12</option>
+  <option value="14">14</option>
+  <option value="16">16</option>
+  <option value="18">18</option>
+  <option value="20">20</option>
+  <option value="22"  >22</option>
+  <option value="24">24</option>
+  <option value="28">28</option>
+  <option value="32">32</option>
+  </select>
+</span>
+    </div>
+
+
+
+    
+  <div class="tool-panel   shapes-panel" data-tool="openShapesBtn">
+<span class="tool   tool-btn">
+      <div class="toolswitch " id="wSwitch" >
+   <label class="mini-switch">
+    <input type="checkbox" id="lockViewSwitch">
+    <span class="mini-slider"></span>
+  </label>
+
+</div>
+
+</span>
+
+
+
+
+        <span class="tool   tool-btn  " id="openShapes" data-submenu="openShapes"> 
+<svg viewBox="0 0 24 24" fill="none">
+  <rect x="3" y="3" width="8" height="8" rx="2" stroke="currentColor" stroke-width="2"/>
+  <circle cx="17" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
+  <polygon points="6,21 3,16 9,16"
+           stroke="currentColor" stroke-width="2" fill="none"/>
+</svg> 
+</span>
+
+ <button  class="tool tool-btn " id="enableCropBtn"> 🖼️  </button>
+    </div>
+ 
+
+  </div>
+
+</div>
+
+
+
+ 
+
+<div id="thirdPanel" class="tool-flyout third-panel">
+
+  <div class="flyout-header">
+  <div id="flyoutActions" class="flyout-actions  ">
+
+  <span class="tool">
+    <input type="color" id="fillPicker" value="#22c55e" />
+  </span>
+
+  <span class="tool">
+    <input type="color" id="strokePicker" value="#333333" />
+  </span>
+
+  <span class="tool">
+    <input type="range" id="strokeWidth" min="1" max="12" value="2" />
+  </span>
+
+</div>
+ 
+    <span class="flyout-close" id="closeThirdPanel">✕</span>
+  </div>
+
+  <div class="flyout-content">
+
+ 
+  <div class="tool-panel   shapes-panel" data-subtool="openShapes">
+ 
+      
+<!-- دائرة -->
+<svg class="shape" data-shape="circle" width="60" height="60">
+  <circle cx="30" cy="30" r="25" fill="#9be7ff" stroke="#333" stroke-width="2"/>
+</svg>
+
+<!-- بيضاوي -->
+<svg class="shape" data-shape="ellipse" width="80" height="50">
+  <ellipse cx="40" cy="25" rx="35" ry="20" fill="#ffe066" stroke="#333" stroke-width="2"/>
+</svg>
+
+<!-- مربع -->
+<svg class="shape" data-shape="square" width="60" height="60">
+  <rect x="5" y="5" width="50" height="50" fill="#d0bfff" stroke="#333" stroke-width="2"/>
+</svg>
+
+<!-- مستطيل -->
+<svg class="shape" data-shape="rectangle" width="80" height="50">
+  <rect x="5" y="5" width="70" height="40" fill="#ffd6a5" stroke="#333" stroke-width="2"/>
+</svg>
+
+<!-- مثلث -->
+<svg class="shape" data-shape="triangle" width="60" height="60">
+  <polygon points="30,5 55,55 5,55" fill="#a5d8ff" stroke="#333" stroke-width="2"/>
+</svg>
+
+<!-- شبه منحرف -->
+<svg class="shape" data-shape="trapezoid" width="70" height="50">
+  <polygon points="10,5 60,5 70,45 0,45" fill="#b2f2bb" stroke="#333" stroke-width="2"/>
+</svg>
+
+ <svg class="shape" data-shape="parallelogram" width="70" height="50">
+  <polygon points="15,5 70,5 55,45 0,45" fill="#ffadad" stroke="#333" stroke-width="2"/>
+</svg>
+
+ <svg class="shape" data-shape="rhombus" width="60" height="60">
+  <polygon points="30,5 55,30 30,55 5,30" fill="#eebefa" stroke="#333" stroke-width="2"/>
+</svg>
+
+ <svg class="shape" data-shape="pentagon" width="60" height="60">
+  <polygon points="30,5 55,22 45,55 15,55 5,22" fill="#ffd8a8" stroke="#333" stroke-width="2"/>
+</svg>
+
+<!-- سداسي -->
+<svg class="shape" data-shape="hexagon" width="60" height="60">
+  <polygon points="15,5 45,5 55,30 45,55 15,55 5,30"
+           fill="#c3fae8" stroke="#333" stroke-width="2"/>
+</svg>
+
+<!-- مثمن -->
+<svg class="shape" data-shape="octagon" width="60" height="60">
+  <polygon points="20,5 40,5 55,20 55,40 40,55 20,55 5,40 5,20"
+           fill="#bac8ff" stroke="#333" stroke-width="2"/>
+</svg>
+
+<!-- مكعب -->
+<svg class="shape" data-shape="cube" width="70" height="70">
+  <polygon points="20,10 50,10 60,25 30,25" fill="#ffd43b" stroke="#333"/>
+  <polygon points="20,10 30,25 30,55 20,40" fill="#fab005" stroke="#333"/>
+  <polygon points="30,25 60,25 60,55 30,55" fill="#ffe066" stroke="#333"/>
+</svg>
+
+<!-- متوازي مستطيلات -->
+<svg class="shape" data-shape="cuboid" width="80" height="60">
+  <polygon points="20,10 55,10 65,22 30,22" fill="#ffa8a8" stroke="#333"/>
+  <polygon points="20,10 30,22 30,50 20,38" fill="#ff8787" stroke="#333"/>
+  <polygon points="30,22 65,22 65,50 30,50" fill="#ffc9c9" stroke="#333"/>
+</svg>
+
+<!-- اسطوانة -->
+<svg class="shape" data-shape="cylinder" width="60" height="70">
+  <ellipse cx="30" cy="15" rx="20" ry="8" fill="#a5d8ff" stroke="#333"/>
+  <rect x="10" y="15" width="40" height="35" fill="#74c0fc" stroke="#333"/>
+  <ellipse cx="30" cy="50" rx="20" ry="8" fill="#4dabf7" stroke="#333"/>
+</svg>
+
+<!-- مخروط -->
+<svg class="shape" data-shape="cone" width="60" height="70">
+  <ellipse cx="30" cy="55" rx="20" ry="8" fill="#ffd6a5" stroke="#333"/>
+  <polygon points="10,55 30,10 50,55" fill="#ffa94d" stroke="#333"/>
+</svg>
+
+<!-- هرم -->
+<svg class="shape" data-shape="pyramid" width="70" height="70">
+  <polygon points="35,10 60,50 10,50" fill="#d0bfff" stroke="#333"/>
+  <polygon points="35,10 35,50 60,50" fill="#b197fc" stroke="#333"/>
+</svg>
+
+<!-- كرة -->
+<svg class="shape" data-shape="sphere" width="60" height="60">
+  <circle cx="30" cy="30" r="25" fill="#69db7c" stroke="#333"/>
+  <ellipse cx="30" cy="30" rx="25" ry="10" fill="none" stroke="#333"/>
+</svg>
+
+<!-- هرم رباعي -->
+<svg class="shape" data-shape="squarePyramid" width="70" height="70">
+  <polygon points="35,10 60,50 10,50" fill="#d0bfff" stroke="#333"/>
+  <polygon points="35,10 35,50 60,50" fill="#b197fc" stroke="#333"/>
+</svg>
+
+<!-- منشور ثلاثي -->
+<svg class="shape" data-shape="triPrism" width="80" height="70">
+  <polygon points="20,50 60,50 40,10" fill="#a5d8ff" stroke="#333"/>
+  <polygon points="20,50 20,65 60,65 60,50" fill="#74c0fc" stroke="#333"/>
+</svg>
+
+<!-- منشور سداسي -->
+<svg class="shape" data-shape="hexPrism" width="80" height="70">
+  <polygon points="30,10 50,10 60,25 50,40 30,40 20,25" fill="#c3fae8" stroke="#333"/>
+  <polygon points="20,25 30,40 30,55 20,40" fill="#8ce99a" stroke="#333"/>
+  <polygon points="30,40 50,40 50,55 30,55" fill="#69db7c" stroke="#333"/>
+</svg>
+
+
+  <!-- مسطرة -->
+  <svg class="shape ruler" data-shape="ruler" width="120" height="30">
+    <rect x="2" y="5" width="116" height="20"
+          fill="#f4a261" stroke="#333"/>
+  </svg>
+
+  <!-- مثلث قائم 45° -->
+  <svg class="shape" data-shape="set-square-45" width="70" height="70">
+    <polygon points="5,65 65,65 65,5"
+             fill="#f4a261" stroke="#333"/>
+  </svg>
+
+  <!-- مثلث 30°–60° -->
+  <svg class="shape" data-shape="set-square-30-60" width="80" height="70">
+    <polygon points="5,65 75,65 45,5"
+             fill="#f4a261" stroke="#333"/>
+  </svg>
+
+  <!-- منقلة -->
+  <svg class="shape" data-shape="protractor" width="120" height="60">
+    <path d="M10 55 A50 50 0 0 1 110 55"
+          fill="#f4a261" stroke="#333"/>
+  </svg>
+
+
+  <!-- سباعي (Heptagon) -->
+<svg class="shape" data-shape="heptagon" width="70" height="70" viewBox="0 0 70 70">
+  <polygon points="35,6 52,14 62,30 58,48 42,62 28,62 12,48 8,30 18,14"
+           fill="#c3fae8" stroke="#333" stroke-width="2"/>
+</svg>
+
+<!-- تساعي (Nonagon) -->
+<svg class="shape" data-shape="nonagon" width="70" height="70" viewBox="0 0 70 70">
+  <polygon points="35,5 50,10 60,22 62,38 54,52 40,62 30,62 16,52 8,38 10,22 20,10"
+           fill="#ffd8a8" stroke="#333" stroke-width="2"/>
+</svg>
+
+<!-- عشاري (Decagon) -->
+<svg class="shape" data-shape="decagon" width="70" height="70" viewBox="0 0 70 70">
+  <polygon points="35,5 48,9 58,18 62,31 60,44 52,55 40,62 30,62 18,55 10,44 8,31 12,18 22,9"
+           fill="#bac8ff" stroke="#333" stroke-width="2"/>
+</svg>
+
+<!-- 11 ضلع (Hendecagon) -->
+<svg class="shape" data-shape="hendecagon" width="70" height="70" viewBox="0 0 70 70">
+  <polygon points="35,5 46,8 56,15 62,25 63,36 60,47 52,56 41,62 29,62 18,56 10,47 7,36 8,25 14,15 24,8"
+           fill="#ffadad" stroke="#333" stroke-width="2"/>
+</svg>
+
+<!-- 12 ضلع (Dodecagon) -->
+<svg class="shape" data-shape="dodecagon" width="70" height="70" viewBox="0 0 70 70">
+  <polygon points="35,5 45,7 54,12 61,20 64,30 64,40 61,50 54,58 45,63 35,65 25,63 16,58 9,50 6,40 6,30 9,20 16,12 25,7"
+           fill="#eebefa" stroke="#333" stroke-width="2"/>
+</svg>
+
+
+<!-- نجمة خماسية -->
+<svg class="shape" data-shape="star-5" width="70" height="70" viewBox="0 0 70 70">
+  <polygon points="35,6 42,26 63,26 46,38 52,60 35,47 18,60 24,38 7,26 28,26"
+           fill="#ffe066" stroke="#333" stroke-width="2"/>
+</svg>
+
+<!-- Pentagram (نجمة داخلية) -->
+<svg class="shape" data-shape="pentagram" width="70" height="70" viewBox="0 0 70 70">
+  <polygon points="35,7 43,26 64,26 47,38 53,62 35,49 17,62 23,38 6,26 27,26"
+           fill="none" stroke="#333" stroke-width="2" stroke-linejoin="round"/>
+</svg>
+
+<!-- Hexagram (نجمة سداسية) -->
+<svg class="shape" data-shape="hexagram" width="70" height="70" viewBox="0 0 70 70">
+  <polygon points="35,8 58,50 12,50" fill="#a5d8ff" stroke="#333" stroke-width="2"/>
+  <polygon points="35,62 58,20 12,20" fill="#74c0fc" stroke="#333" stroke-width="2"/>
+</svg>
+
+<!-- نجمة متعددة (Star Polygon 8) -->
+<svg class="shape" data-shape="star-8" width="70" height="70" viewBox="0 0 70 70">
+  <path d="M35 6 L41 24 L64 35 L41 46 L35 64 L29 46 L6 35 L29 24 Z"
+        fill="#ffd6a5" stroke="#333" stroke-width="2" stroke-linejoin="round"/>
+</svg>
+     
+
+<!-- هلال (Crescent) -->
+<svg class="shape" data-shape="crescent" width="70" height="70" viewBox="0 0 70 70">
+  <path d="M45 10 A22 22 0 1 0 45 60 A16 16 0 1 1 45 10 Z"
+        fill="#bac8ff" stroke="#333" stroke-width="2"/>
+</svg>
+
+<!-- عدسة (Lens) -->
+<svg class="shape" data-shape="lens" width="70" height="70" viewBox="0 0 70 70">
+  <path d="M15 35 C23 15, 47 15, 55 35 C47 55, 23 55, 15 35 Z"
+        fill="#c3fae8" stroke="#333" stroke-width="2"/>
+</svg>
+
+ <svg class="shape" data-shape="reuleaux" width="70" height="70" viewBox="0 0 70 70">
+  <path d="M35 12
+           A24 24 0 0 1 57 50
+           A24 24 0 0 1 13 50
+           A24 24 0 0 1 35 12 Z"
+        fill="#ffadad" stroke="#333" stroke-width="2"/>
+</svg>
+
+ <svg class="shape" data-shape="cardioid" width="70" height="70" viewBox="0 0 70 70">
+  <path d="M35 18
+           C50 5, 66 22, 52 36
+           C44 44, 35 56, 35 60
+           C35 56, 26 44, 18 36
+           C4 22, 20 5, 35 18 Z"
+        fill="#ffd8a8" stroke="#333" stroke-width="2"/>
+</svg>
+
+<!-- Lemniscate ∞ -->
+<svg class="shape" data-shape="lemniscate" width="70" height="70" viewBox="0 0 70 70">
+  <path d="M10 35
+           C10 20, 28 20, 35 35
+           C42 50, 60 50, 60 35
+           C60 20, 42 20, 35 35
+           C28 50, 10 50, 10 35 Z"
+        fill="none" stroke="#333" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+
+<!-- Spiral (حلزوني) -->
+<svg class="shape" data-shape="spiral" width="70" height="70" viewBox="0 0 70 70">
+  <path d="M35 12
+           C22 12, 18 22, 18 28
+           C18 40, 32 42, 36 38
+           C42 32, 36 24, 28 26
+           C20 28, 22 50, 44 50
+           C58 50, 60 28, 45 18"
+        fill="none" stroke="#333" stroke-width="3" stroke-linecap="round"/>
+</svg>
+
+<!-- Arch (قوس) -->
+<svg class="shape" data-shape="arch" width="70" height="70" viewBox="0 0 70 70">
+  <path d="M12 58 A23 23 0 0 1 58 58"
+        fill="none" stroke="#333" stroke-width="4" stroke-linecap="round"/>
+  <path d="M18 58 A17 17 0 0 1 52 58"
+        fill="none" stroke="#74c0fc" stroke-width="4" stroke-linecap="round"/>
+</svg>
+      
+
+
+<!-- Cross (+) -->
+<svg class="shape" data-shape="cross" width="70" height="70" viewBox="0 0 70 70">
+  <path d="M30 10 H40 V30 H60 V40 H40 V60 H30 V40 H10 V30 H30 Z"
+        fill="#d0bfff" stroke="#333" stroke-width="2" stroke-linejoin="round"/>
+</svg>
+
+<!-- Chevron -->
+<svg class="shape" data-shape="chevron" width="70" height="70" viewBox="0 0 70 70">
+  <path d="M18 18 L38 35 L18 52" fill="none" stroke="#333" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M34 18 L54 35 L34 52" fill="none" stroke="#333" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+
+<!-- Arrow (سهم) -->
+<svg class="shape" data-shape="arrow" width="70" height="70" viewBox="0 0 70 70">
+  <path d="M12 35 H44" stroke="#333" stroke-width="5" stroke-linecap="round"/>
+  <path d="M40 22 L58 35 L40 48" fill="none" stroke="#333" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+
+<!-- Shield (درع) -->
+<svg class="shape" data-shape="shield" width="70" height="70" viewBox="0 0 70 70">
+  <path d="M35 8 L58 16 V33 C58 48 48 58 35 62 C22 58 12 48 12 33 V16 Z"
+        fill="#c3fae8" stroke="#333" stroke-width="2" stroke-linejoin="round"/>
+</svg>
+
+ <svg class="shape" data-shape="heart" width="70" height="70" viewBox="0 0 70 70">
+  <path d="M35 58 C35 58, 12 42, 12 26
+           C12 16, 20 10, 28 12
+           C32 13, 34 16, 35 18
+           C36 16, 38 13, 42 12
+           C50 10, 58 16, 58 26
+           C58 42, 35 58, 35 58 Z"
+        fill="#ffadad" stroke="#333" stroke-width="2"/>
+</svg>
+
+<!-- Cloud (سحابة) -->
+<svg class="shape" data-shape="cloud" width="80" height="60" viewBox="0 0 80 60">
+  <path d="M24 44 H58
+           C66 44, 70 39, 70 33
+           C70 27, 66 23, 60 23
+           C58 14, 50 10, 42 12
+           C38 6, 28 6, 24 12
+           C16 12, 10 18, 10 26
+           C4 27, 2 32, 2 36
+           C2 41, 7 44, 12 44 Z"
+        fill="#a5d8ff" stroke="#333" stroke-width="2" stroke-linejoin="round"/>
+</svg>
+
+<!-- Wave (موجة) -->
+<svg class="shape" data-shape="wave" width="80" height="60" viewBox="0 0 80 60">
+  <path d="M5 35 C15 20, 25 50, 35 35
+           C45 20, 55 50, 65 35
+           C70 28, 75 28, 78 35"
+        fill="none" stroke="#333" stroke-width="4" stroke-linecap="round"/>
+</svg>
+
+
+
+
+ <svg class="shape" data-shape="tetrahedron" width="70" height="70" viewBox="0 0 70 70">
+  <polygon points="35,10 60,55 10,55" fill="#a5d8ff" stroke="#333" stroke-width="2"/>
+  <polygon points="35,10 35,55 60,55" fill="#74c0fc" stroke="#333" stroke-width="2"/>
+</svg>
+
+<!-- Dodecahedron (مبسّط أيقوني) -->
+<svg class="shape" data-shape="dodecahedron" width="70" height="70" viewBox="0 0 70 70">
+  <polygon points="35,6 52,14 60,30 54,48 35,62 16,48 10,30 18,14"
+           fill="#ffd43b" stroke="#333" stroke-width="2"/>
+  <polygon points="35,18 44,22 48,32 44,42 35,46 26,42 22,32 26,22"
+           fill="#ffe066" stroke="#333" stroke-width="2"/>
+</svg>
+
+<!-- Icosahedron (مبسّط أيقوني) -->
+<svg class="shape" data-shape="icosahedron" width="70" height="70" viewBox="0 0 70 70">
+  <polygon points="35,6 62,30 50,62 20,62 8,30"
+           fill="#c3fae8" stroke="#333" stroke-width="2"/>
+  <polygon points="35,18 50,30 44,50 26,50 20,30"
+           fill="#8ce99a" stroke="#333" stroke-width="2"/>
+</svg>
+
+<!-- Torus (دونات) -->
+<svg class="shape" data-shape="torus" width="70" height="70" viewBox="0 0 70 70">
+  <ellipse cx="35" cy="35" rx="26" ry="18" fill="#ffd6a5" stroke="#333" stroke-width="2"/>
+  <ellipse cx="35" cy="35" rx="12" ry="8" fill="#fff" stroke="#333" stroke-width="2"/>
+</svg>
+
+<!-- Ellipsoid -->
+<svg class="shape" data-shape="ellipsoid" width="70" height="70" viewBox="0 0 70 70">
+  <ellipse cx="35" cy="35" rx="24" ry="18" fill="#bac8ff" stroke="#333" stroke-width="2"/>
+  <ellipse cx="35" cy="35" rx="24" ry="7" fill="none" stroke="#333" stroke-width="2"/>
+</svg>
+
+<!-- Hemisphere (نصف كرة) -->
+<svg class="shape" data-shape="hemisphere" width="70" height="70" viewBox="0 0 70 70">
+  <path d="M12 44 A23 23 0 0 1 58 44 L58 50 L12 50 Z"
+        fill="#74c0fc" stroke="#333" stroke-width="2" stroke-linejoin="round"/>
+  <ellipse cx="35" cy="44" rx="23" ry="7" fill="#a5d8ff" stroke="#333" stroke-width="2"/>
+</svg>
+
+<!-- Capsule (كبسولة) -->
+<svg class="shape" data-shape="capsule" width="80" height="50" viewBox="0 0 80 50">
+  <rect x="10" y="10" width="60" height="30" rx="15" fill="#ffadad" stroke="#333" stroke-width="2"/>
+  <path d="M40 10 V40" stroke="#333" stroke-width="2" opacity="0.6"/>
+</svg>
+
+ <svg class="shape" data-shape="frustum" width="70" height="70" viewBox="0 0 70 70">
+  <polygon points="22,18 48,18 58,52 12,52" fill="#d0bfff" stroke="#333" stroke-width="2"/>
+  <polygon points="28,26 42,26 46,40 24,40" fill="#b197fc" stroke="#333" stroke-width="2"/>
+</svg>
+
+<!-- Cone Frustum (مخروط مقطوع) -->
+<svg class="shape" data-shape="cone-frustum" width="70" height="70" viewBox="0 0 70 70">
+  <ellipse cx="35" cy="18" rx="16" ry="6" fill="#ffd6a5" stroke="#333" stroke-width="2"/>
+  <path d="M19 18 L12 54 C12 54, 35 64, 58 54 L51 18"
+        fill="#ffa94d" stroke="#333" stroke-width="2" stroke-linejoin="round"/>
+  <ellipse cx="35" cy="54" rx="23" ry="8" fill="#ffd43b" stroke="#333" stroke-width="2"/>
+</svg>
+
+
+
+<!-- زاوية (Angle) -->
+<svg class="shape" data-shape="angle" width="70" height="70" viewBox="0 0 70 70">
+  <path d="M18 52 L18 18 L52 52" fill="none" stroke="#333" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="18" cy="52" r="3" fill="#333"/>
+</svg>
+
+<!-- Sector (قطاع دائري) -->
+<svg class="shape" data-shape="sector" width="70" height="70" viewBox="0 0 70 70">
+  <path d="M35 35 L60 35 A25 25 0 0 1 47 57 Z"
+        fill="#c3fae8" stroke="#333" stroke-width="2"/>
+</svg>
+
+<!-- Segment (قطعة دائرية) -->
+<svg class="shape" data-shape="segment" width="70" height="70" viewBox="0 0 70 70">
+  <path d="M15 40 A20 20 0 0 0 55 40 Q35 55 15 40 Z"
+        fill="#bac8ff" stroke="#333" stroke-width="2"/>
+</svg>
+
+<!-- Chord (وتر) -->
+<svg class="shape" data-shape="chord" width="70" height="70" viewBox="0 0 70 70">
+  <circle cx="35" cy="35" r="22" fill="none" stroke="#333" stroke-width="2"/>
+  <line x1="20" y1="30" x2="50" y2="42" stroke="#333" stroke-width="3" stroke-linecap="round"/>
+</svg>
+
+<!-- Tangent (مماس) -->
+<svg class="shape" data-shape="tangent" width="70" height="70" viewBox="0 0 70 70">
+  <circle cx="35" cy="35" r="18" fill="none" stroke="#333" stroke-width="2"/>
+  <line x1="53" y1="10" x2="53" y2="60" stroke="#333" stroke-width="3" stroke-linecap="round"/>
+</svg>
+
+<!-- Secant (قاطع) -->
+<svg class="shape" data-shape="secant" width="70" height="70" viewBox="0 0 70 70">
+  <circle cx="35" cy="35" r="18" fill="none" stroke="#333" stroke-width="2"/>
+  <line x1="10" y1="55" x2="60" y2="15" stroke="#333" stroke-width="3" stroke-linecap="round"/>
+</svg>
+
+<!-- Vector (متجه) -->
+<svg class="shape" data-shape="vector" width="70" height="70" viewBox="0 0 70 70">
+  <line x1="14" y1="52" x2="52" y2="18" stroke="#333" stroke-width="4" stroke-linecap="round"/>
+  <path d="M49 16 L58 14 L56 23" fill="none" stroke="#333" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+
+
+
+<!-- Parabola -->
+<svg class="shape" data-shape="parabola" width="80" height="60" viewBox="0 0 80 60">
+  <path d="M10 50 Q40 10 70 50" fill="none" stroke="#333" stroke-width="3" stroke-linecap="round"/>
+</svg>
+
+<!-- Hyperbola (تقريب بصري) -->
+<svg class="shape" data-shape="hyperbola" width="80" height="60" viewBox="0 0 80 60">
+  <path d="M12 50 C20 36, 28 30, 40 30" fill="none" stroke="#333" stroke-width="3" stroke-linecap="round"/>
+  <path d="M68 50 C60 36, 52 30, 40 30" fill="none" stroke="#333" stroke-width="3" stroke-linecap="round"/>
+  <path d="M12 10 C20 24, 28 30, 40 30" fill="none" stroke="#333" stroke-width="3" stroke-linecap="round"/>
+  <path d="M68 10 C60 24, 52 30, 40 30" fill="none" stroke="#333" stroke-width="3" stroke-linecap="round"/>
+</svg>
+
+<!-- Sine Wave -->
+<svg class="shape" data-shape="sine" width="90" height="60" viewBox="0 0 90 60">
+  <path d="M5 30 C15 10, 25 10, 35 30 C45 50, 55 50, 65 30 C75 10, 85 10, 95 30"
+        transform="translate(-5,0)"
+        fill="none" stroke="#333" stroke-width="3" stroke-linecap="round"/>
+</svg>
+
+<!-- Bezier Curve (Cubic) -->
+<svg class="shape" data-shape="bezier-cubic" width="90" height="60" viewBox="0 0 90 60">
+  <path d="M10 50 C25 10, 65 10, 80 50" fill="none" stroke="#333" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="25" cy="10" r="3" fill="#333"/>
+  <circle cx="65" cy="10" r="3" fill="#333"/>
+</svg>
+<!-- Bounding Box -->
+<svg class="shape" data-shape="bbox" width="70" height="70" viewBox="0 0 70 70">
+  <rect x="12" y="12" width="46" height="46" fill="none" stroke="#333" stroke-width="2" stroke-dasharray="5 4"/>
+  <circle cx="12" cy="12" r="3" fill="#333"/>
+  <circle cx="58" cy="12" r="3" fill="#333"/>
+  <circle cx="12" cy="58" r="3" fill="#333"/>
+  <circle cx="58" cy="58" r="3" fill="#333"/>
+</svg>
+
+<!-- Convex Hull (تقريب) -->
+<svg class="shape" data-shape="convex-hull" width="70" height="70" viewBox="0 0 70 70">
+  <polygon points="14,45 22,18 46,14 58,30 50,56 28,58"
+           fill="#c3fae8" stroke="#333" stroke-width="2"/>
+  <circle cx="22" cy="18" r="3" fill="#333"/>
+  <circle cx="46" cy="14" r="3" fill="#333"/>
+  <circle cx="58" cy="30" r="3" fill="#333"/>
+  <circle cx="50" cy="56" r="3" fill="#333"/>
+  <circle cx="28" cy="58" r="3" fill="#333"/>
+  <circle cx="14" cy="45" r="3" fill="#333"/>
+</svg>
+
+<!-- Voronoi Cell (تقريب) -->
+<svg class="shape" data-shape="voronoi-cell" width="70" height="70" viewBox="0 0 70 70">
+  <polygon points="18,20 40,14 56,28 50,52 26,58 12,40"
+           fill="#bac8ff" stroke="#333" stroke-width="2"/>
+  <circle cx="34" cy="34" r="3" fill="#333"/>
+</svg>
+
+<!-- Polygon Mesh -->
+<svg class="shape" data-shape="mesh" width="70" height="70" viewBox="0 0 70 70">
+  <rect x="10" y="10" width="50" height="50" fill="#fff" stroke="#333" stroke-width="2"/>
+  <path d="M10 35 H60 M35 10 V60 M10 10 L60 60 M60 10 L10 60"
+        stroke="#333" stroke-width="1.5" opacity="0.7"/>
+</svg>
+
+<!-- Path (SVG-like) -->
+<svg class="shape" data-shape="path" width="70" height="70" viewBox="0 0 70 70">
+  <path d="M12 50 Q20 18 35 28 T58 22"
+        fill="none" stroke="#333" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="12" cy="50" r="3" fill="#333"/>
+  <circle cx="35" cy="28" r="3" fill="#333"/>
+  <circle cx="58" cy="22" r="3" fill="#333"/>
+</svg>
+
+
+<!-- Arrow Right -->
+<svg class="shape" data-shape="arrow-right" width="70" height="70" viewBox="0 0 70 70">
+  <path d="M16 35 H46" stroke="#333" stroke-width="5" stroke-linecap="round"/>
+  <path d="M46 35 L36 25" stroke="#333" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M46 35 L36 45" stroke="#333" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+
+    <!-- شبكة مربعات -->
+  <svg class="shape" data-shape="grid-basic"
+       width="70" height="70" viewBox="0 0 70 70">
+    <path d="M15 10 V60 M35 10 V60 M55 10 V60"
+          stroke="#333" stroke-width="3" stroke-linecap="round"/>
+    <path d="M10 15 H60 M10 35 H60 M10 55 H60"
+          stroke="#333" stroke-width="3" stroke-linecap="round"/>
+  </svg>
+
+  <!-- شبكة بمحاور -->
+  <svg class="shape" data-shape="grid-axis"
+       width="70" height="70" viewBox="0 0 70 70">
+    <path d="M15 10 V60 M35 10 V60 M55 10 V60"
+          stroke="#aaa" stroke-width="2"/>
+    <path d="M10 15 H60 M10 35 H60 M10 55 H60"
+          stroke="#aaa" stroke-width="2"/>
+    <path d="M10 35 H60" stroke="#333" stroke-width="4"/>
+    <path d="M35 60 V10" stroke="#333" stroke-width="4"/>
+  </svg>
+
+    </div>
+ 
+    <!-- MindMap submenu -->
+    <div class="tool-panel" data-subtool="mindmapOptions">
+      <button class="tool-btn">إضافة عقدة</button>
+      <button class="tool-btn">تلوين</button>
+    </div>
+
+  </div>
+
+</div>
+
+
+<script>
+  let  infoLayer = "";
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+
+let hasSavedLayer = true; // هل توجد طبقة محفوظة؟
+
+ 
+
+
+ function resizeCanvas() {
+  const canvas = document.getElementById("board");
+  const rect = canvas.getBoundingClientRect();
+
+  canvas.width  = rect.width;
+  canvas.height = rect.height;
+}
+
+   function activateTab1Overlay() {
+  const tab1 = document.getElementById("tab1");
+  if (!tab1) return;
+
+  tab1.classList.add("overlay-active");
+}
+function deactivateTab1Overlay() {
+  const tab1 = document.getElementById("tab1");
+  if (!tab1) return;
+
+  tab1.classList.remove("overlay-active");
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  //  activateTab1Overlay();  
+});
+
+ 
+</script>
+ <script>
+ 
+document.addEventListener("DOMContentLoaded", () => {
+
+  const items = document.querySelectorAll(".toolprent");
+  if(!items.length) return;
+
+  function setActive(target){
+    items.forEach(el => {
+      el.classList.remove("active");
+      el.setAttribute("aria-pressed","false");
+    });
+
+    target.classList.add("active");
+    target.setAttribute("aria-pressed","true");
+  }
+
+  // 🔹 الافتراضي
+  setActive(items[0]);
+
+  // 🔹 عند الضغط
+  items.forEach(item=>{
+    item.addEventListener("click", function(){
+      setActive(this);
+    });
+  });
+
+});
+ 
+</script>
+  
+  </script>
+    <script src="js/Math/LibleresMATH.JS"></script>
+
+ <script  src="js/GlobleFunction.js"></script>
+   <!-- <script type="module" src="js/main.js"></script> -->
+
+  <script  type="module" src="js/JsAddLayerImage.js"></script>
+  <script src="js/QutionSemple.js"></script>
+ </script>
+ </body>
+</html>
+
