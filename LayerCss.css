@@ -1,0 +1,313 @@
+/* ===============================
+   أزرار الطبقة
+================================ */
+.layer .layer-btn{
+  position:absolute;
+  width:28px;
+  height:28px;
+  border:none;
+  border-radius:50%;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:900;
+  line-height:1;
+  transition: all .15s ease;
+}
+
+/* 🔴 زر الحذف (خطر) */
+.layer-del{
+  top:-14px;
+  left:-14px;
+  background:#e53935;
+  color:#fff;
+  box-shadow:0 6px 16px rgba(229,57,53,.45);
+}
+
+.layer-del:hover{
+  background:#c62828;
+  transform: scale(1.05);
+}
+
+/* ℹ️ زر المعلومات (ثانوي) */
+.layer-info{
+  top:-14px;
+  right:28px;
+  width:22px;
+  height:22px;
+  font-size:13px;
+  background:rgba(0,0,0,.35);
+  color:#fff;
+  opacity:.75;
+}
+
+.layer-info:hover{
+  opacity:1;
+  background:rgba(0,0,0,.55);
+}
+
+/* ⭐ زر القائمة (الأساسي) */
+.layer-menu{
+  top:-18px;
+  right:-18px;
+  width:32px;
+  height:32px;
+  background:rgba(0,0,0,.75);
+  color:#fff;
+  font-size:18px;
+  box-shadow:0 10px 24px rgba(0,0,0,.45);
+}
+
+.layer-menu:hover{
+  background:#000;
+  transform: scale(1.08);
+}
+.layer .layer-index{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  font-size:22px;
+  font-weight:900;
+  color:#ffffff;
+
+  text-shadow:
+    0 2px 6px rgba(0,0,0,.65),
+    0 0 12px rgba(0,0,0,.35);
+
+  /* pointer-events:none; */
+}
+/* ===== Dropdown (أسفل أيقونة ⋮) ===== */
+ 
+.layer .layer-dropdown{
+  position:absolute;
+  top:1%;
+  right:0;
+  margin-top:8px;
+
+  min-width:140px;
+  background:#0706067e;
+  color:#ddc5c5;
+  border-radius:12px;
+  padding:6px;
+
+  box-shadow:0 14px 32px rgba(0,0,0,.35);
+  z-index:1000;
+
+  opacity:0;
+  pointer-events:none;   /* ✅ الحل */
+  transform: translateY(-6px) scale(.96);
+
+  transition:
+    opacity .18s ease,
+    transform .18s ease;
+}
+
+.layer.menu-open .layer-dropdown{
+  opacity:1;
+  pointer-events:auto;   /* ✅ تفعيل فقط عند الفتح */
+  transform: translateY(0) scale(1);
+}
+
+/* حالة الفتح */
+.layer.menu-open .layer-dropdown{
+  opacity:1;
+  pointer-events:auto;
+  transform: translateY(0) scale(1);
+}
+
+/* أزرار القائمة */
+.layer-dropdown button{
+  width:100%;
+  background:transparent;
+  border:none;
+  color:#fff;
+  padding:9px 10px;
+  text-align:right;
+  border-radius:8px;
+  cursor:pointer;
+  font-weight:700;
+}
+
+.layer-dropdown button:hover{
+  background: rgba(255,255,255,.12);
+}
+/* ===== Resize Handles ===== */
+.layer .resize-handle{
+  position:absolute;
+  width:10px;
+  height:10px;
+  background:#fff;
+  border:2px solid #1976d2;
+  border-radius:50%;
+  z-index:5;
+}
+
+/* الاتجاهات */
+.resize-r { right:-6px; top:50%; transform:translateY(-50%); cursor: ew-resize; }
+.resize-l { left:-6px;  top:50%; transform:translateY(-50%); cursor: ew-resize; }
+.resize-b { bottom:-6px; left:50%; transform:translateX(-50%); cursor: ns-resize; }
+.resize-t { top:-6px; left:50%; transform:translateX(-50%); cursor: ns-resize; }
+.layer-label {
+  position: absolute;
+    /* bottom: -18px; */
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 15px;
+    font-weight: 600;
+    color: #1f2937;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 2px 6px;
+    border-radius: 6px;
+    /* pointer-events: none; */
+    white-space: nowrap;
+    top: 1px;}
+
+
+    /* طبقة فوق tab1 */
+#tab1 {
+  position: relative;
+}
+/* وميض عند اصطدام حدود الصورة */
+.image-boundary-hit {
+  outline: 3px solid rgba(255, 60, 60, 0.9);
+  outline-offset: -3px;
+  animation: boundaryFlash 0.35s ease;
+}
+
+@keyframes boundaryFlash {
+  0%   { outline-color: rgba(255, 60, 60, 0.0); }
+  40%  { outline-color: rgba(255, 60, 60, 1); }
+  100% { outline-color: rgba(255, 60, 60, 0.0); }
+}
+
+/* overlay نفسها */
+.tab-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.85);
+  z-index: 50;
+  display: none;
+
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+/* محتوى النص */
+.tab-overlay .overlay-content {
+  padding: 20px 28px;
+  background: #f3f4f6;
+  border: 2px dashed #9ca3af;
+  border-radius: 14px;
+  font-weight: 700;
+  color: #374151;
+}
+
+/* حالة التفعيل */
+#tab1.overlay-active .tab-overlay {
+  display: flex;
+}
+/* التولتيب */
+.layer-tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-6px);
+
+  background: #111827;
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 8px;
+
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+
+  opacity: 0;
+  /* pointer-events: none; */
+  transition: opacity 0.2s ease, transform 0.2s ease;
+
+  z-index: 9999;
+}
+
+/* السهم الصغير */
+.layer-tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px;
+  border-style: solid;
+  border-color: #111827 transparent transparent transparent;
+}
+
+/* إظهار التولتيب عند hover */
+.layer-locked:hover .layer-tooltip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-12px);
+}
+
+
+/* ===== رقم الطبقة داخل دائرة ===== */
+.layer-index {
+  position: absolute;
+  top: -14px;
+  left: -14px;
+
+  width: 32px;
+  height: 32px;
+
+  border-radius: 50%;
+  /* background: linear-gradient(135deg, #2563eb, #3b82f6); */
+  color: #000000;
+
+  background: #fff ;
+ 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 14px;
+  font-weight: 700;
+
+  box-shadow:
+    0 4px 10px rgba(0, 0, 0, 0.25),
+    inset 0 0 0 2px rgba(255, 255, 255, 0.25);
+
+  /* pointer-events: none; */
+  user-select: none;
+  z-index: 20;
+  margin-left: 38%;
+}
+
+/* عند تحديد الطبقة */
+.layer.is-selected .layer-index {
+  background: linear-gradient(135deg, #16a34a, #22c55e);
+      margin-left: 45%;
+    margin-top: -12%;
+}
+.layer-notice {
+  position: absolute;
+  z-index: 9999;
+  background: #fff7e6;
+  color: #7a4a00;
+  border: 1px solid #facc15;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+  animation: fadeInOut 2.5s ease forwards;
+  /* pointer-events: none; */
+}
+
+@keyframes fadeInOut {
+  0%   { opacity: 0; transform: translateY(-6px); }
+  10%  { opacity: 1; transform: translateY(0); }
+  80%  { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-6px); }
+}

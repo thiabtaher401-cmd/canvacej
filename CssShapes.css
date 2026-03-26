@@ -1,0 +1,135 @@
+.modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background: #fff;
+  padding: 16px;
+  border-radius: 8px;
+  width: 360px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.shapes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.shape {
+  width: 60px;
+  height: 60px;
+  border: 2px solid #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+  font-size: 14px;
+}
+
+/* أشكال */
+/* .square {
+
+
+ } */
+.rectangle { width: 80px; }
+.circle { border-radius: 50%; }
+.oval { border-radius: 50%; width: 80px; }
+.triangle {
+  width: 0;
+  height: 0;
+  border-left: 30px solid transparent;
+  border-right: 30px solid transparent;
+  border-bottom: 60px solid #333;
+  border-top: none;
+}
+.diamond {
+  transform: rotate(45deg);
+}
+
+/* تعليمية */
+.frame {
+  border-style: dashed;
+}
+.highlight {
+  background: rgba(255,255,0,0.4);
+}
+.note {
+  font-size: 12px;
+}
+
+
+
+/*shape after printer*/
+
+#board{
+  position: relative;
+  /* width: 100%;
+  height: 400px;
+   margin-top: 20px; */
+}
+#canvasarea {
+  perspective: 800px;
+}
+
+.canvas-shape {
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  background: rgba(0, 123, 255, 0.3);
+  border: 2px solid #007bff;
+   transform-style: preserve-3d;
+     cursor: move;
+         background: rgb(255 255 255);
+    border: none;
+}
+
+.circle {
+  border-radius: 50%;
+}
+
+.rectangle {
+  width: 120px;
+  height: 60px;
+}
+
+
+
+.canvas-shape {
+  transform-style: preserve-3d;
+  display: inline-block;
+   cursor: grab;
+  /* box-sizing مهم للحسابات */
+  box-sizing: border-box;
+}
+
+/* تأكد أن svg داخل الغلاف يملأ المساحة */
+.canvas-shape > svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;  
+  border: none;
+}
+
+/* لو أردت السماح بالنقر على أجزاء داخل الـ svg يمكن إلغاء pointer-events */
+
+/* التأكد من ظهور الخط أثناء رسم الفرّجار مباشرة */
+#drawLayer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none; /* منع تداخل مع الماوس */
+}
+
+ 
+ 

@@ -1,0 +1,47 @@
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 99990;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(3px);
+}
+
+.modal-content {
+  background: #fff;
+  width: 80%;
+  max-width: 900px;
+  margin: 5% auto;
+  padding: 25px;
+  border-radius: 16px;
+  box-shadow: 0 10px 35px rgba(0,0,0,0.3);
+  animation: pop 0.25s ease;
+  margin-top: 0;
+}
+
+@keyframes pop {
+  from { transform: scale(0.8); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+.close {
+  float: left;
+  font-size: 35px;
+  cursor: pointer;
+  margin-top: -10px;
+}
+.modal-open .controlsMEDUM {
+       display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+       width: 379px;
+    margin: 10px auto;
+    position: static;
+     margin-top: 94px;
+  }
+.modal-open .controlsMEDUM button{
+     
+        width: 140px;
+      }

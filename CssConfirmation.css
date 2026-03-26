@@ -1,0 +1,288 @@
+.tree-container {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    width: 520px;
+    margin: auto;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+     max-height: 400px; 
+    overflow-y: auto;
+    padding-right: 10px;
+}
+ 
+input[type="text"] {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    height: 35px;
+    max-width: 70%;
+        
+}
+.subcalss{
+         margin: 10px;
+    display: flex;
+}
+.subInput{
+    display: inline-block;
+}
+.input-area{
+    display: flex;
+}.saved {
+    background: #2563eb;
+    color: white;
+    border: none;
+    padding: 10px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.addQuestion:hover {
+    background: #1e40af;
+}
+.addQuestion{
+    max-width: 80px;
+}
+
+ ul {
+    list-style: none;
+    padding-right: 20px;
+    margin: 0;
+    position: relative;
+}
+
+ul::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 8px;
+    width: 2px;
+    height: 100%;
+    background: #d1d5db;
+}
+
+.question-node {
+    margin-top: 15px;
+    padding: 12px;
+    background: #fff;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    position: relative;
+}
+
+ .toggle-btn {
+    cursor: pointer;
+    margin-left: 10px;
+    font-weight: bold;
+    background: #10b981;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    width: 28px;
+    height: 28px;
+}
+
+.toggle-btn:hover {
+    background: #059669;
+}
+
+.child-box {
+    margin-top: 10px;
+    padding-right: 20px;
+}
+
+.child-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 8px 0;
+    background: #f8fafc;
+    padding: 8px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+}
+
+.child-item input[type="text"] {
+    flex: 1;
+}
+/*delet*/
+.delete-btn {
+    cursor: pointer;
+    margin-left: 6px;
+    font-weight: bold;
+    background: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    width: 28px;
+    height: 28px;
+}
+
+.delete-btn:hover {
+    background: #b91c1c;
+}
+
+
+/*explation*/
+.child-item {
+    margin: 6px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.child-item button {
+    margin-left: 8px;
+    background: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.child-item button:hover {
+    background: #1e40af;
+}
+
+.child-box {
+    margin-left: 28px;
+    margin-top: 4px;
+}
+ 
+.input-box {
+    margin-bottom: 20px;
+}
+
+.input-box input {
+    padding: 8px;
+    width: 250px;
+}
+
+.tree-view {
+    list-style: none;
+    padding-left: 0;
+}
+
+.tree-view li {
+    margin: 10px 0;
+    padding-left: 25px;
+    position: relative;
+}
+
+ .tree-view li::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 5px;
+    width: 1px;
+    height: 100%;
+    background: #888;
+}
+
+ .tree-view li::after {
+    content: "";
+    position: absolute;
+    top: 12px;
+    left: 5px;
+    width: 15px;
+    height: 1px;
+    background: #888;
+}
+
+.node-header {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 5px;
+        max-width: 40px
+}
+
+.node-header button {
+    padding: 4px 8px;
+    border: none;
+    cursor: pointer;
+    background: #ddd;
+    border-radius: 4px;
+}
+
+.node-title {
+    margin-top: 3px;
+    font-weight: bold;
+}
+
+/* Sub Nodes */
+.child-box {
+    margin: 10px 0 0 20px;
+    list-style: none;
+    padding-left: 0;
+}
+
+.child-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 4px 0;
+    position: relative;
+}
+
+ .child-item::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: -15px;
+    width: 12px;
+    height: 1px;
+    background: #999;
+}
+
+
+ 
+
+ 
+.subcalss button {
+ 
+    margin-top: -7px;
+    
+    max-width: 113px;
+    margin-right: 77px;
+       
+       margin-top: -11px;
+    padding: 9px;
+    max-width: 113px;
+    margin-right: 77px;
+    width: 116px;
+}
+ 
+@media (max-width: 600px) {
+
+  /* نقل الأزرار للجانب */
+  .subcalss {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    position: fixed;
+    right: 0;
+    top: 7%;
+    transform: translateY(-50%);
+    width: 160px;
+    background: rgba(255,255,255,0.98);
+    padding: 12px;
+    border-radius: 14px;
+    z-index: 999;
+  }
+
+  /* دفع المحتوى إلى اليسار */
+  .tab {
+    padding-right: 170px !important;
+  }
+
+   .subInput {
+    width: 100%;
+  }
+
+  .subcalss button {
+     width: 100%;
+        margin-right: 11px;
+        margin: 10px;
+  }
+}

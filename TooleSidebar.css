@@ -1,0 +1,660 @@
+/* ===== Reset بسيط ===== */
+ 
+
+/* ===== Sidebar (ToolRail) ===== */
+/* .sidebar{
+  position: fixed;
+  top: 12px;
+  left: 12px;
+
+ width: 110px;  height: calc(100vh - 24px);
+
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+
+  padding: 8px 6px;
+  z-index: 1000;
+
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08); */
+
+ 
+ /* .sidebar-top{
+  padding:10px;
+  border-bottom:1px solid #eee;
+}
+
+.sidebar-scroll{
+  flex:1;
+  overflow-y:auto;
+  padding:10px;
+}
+  .sidebar{
+    width: 10%;
+   height: 100vh;
+
+  background: #ffffff;
+  border-left: 1px solid #e5e7eb;
+
+  display: flex;
+  flex-direction: column;
+
+  position: relative;
+} */
+
+/*   */
+
+.sidebar{
+  
+  width:78px;
+  display:flex;     /* 🔥 مهم جداً */
+  top:0;
+  left:0;
+  bottom:0;           /* يجعلها تمتد من الأعلى للأسفل */
+
+  background:#fff;
+  border-left:1px solid #e5e7eb;
+
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;          /* مهم */
+}
+
+/* ✅ نسخة واحدة فقط */
+.tools-grid{
+  flex:1;                   /* مهم */
+  min-height:0;             /* 🔥 أهم سطر لظهور السكرول داخل flex */
+
+  display:flex;
+  flex-direction:column;
+  flex:1;
+  min-height:0;
+
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+min-height:0;
+  overflow-y:auto;
+  overflow-x:hidden;
+}
+ /* ✅ سكرول احترافي */
+.tools-grid::-webkit-scrollbar{
+  width:8px;
+}
+.tools-grid::-webkit-scrollbar-track{
+  background: transparent;
+}
+.tools-grid::-webkit-scrollbar-thumb{
+  background: linear-gradient(
+    180deg,
+    rgba(148,163,184,.7),
+    rgba(100,116,139,.7)
+  );
+  border-radius:20px;
+  border:2px solid transparent;
+  background-clip: content-box;
+}
+.tools-grid::-webkit-scrollbar-thumb:hover{
+  background: linear-gradient(
+    180deg,
+    rgba(99,102,241,.8),
+    rgba(59,130,246,.8)
+  );
+}
+ 
+
+/* اخفاء سكرول بشكل لطيف (اختياري) */
+ 
+.tool{
+    height: 38px;
+    width: 96%;             /* خذ عرض الـ tools-grid */
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  background:#f8fafc;
+  border:1px solid #e5e7eb;
+  border-radius:12px;
+
+  cursor:pointer;
+  user-select:none;
+  transition:all .15s ease;
+
+  /* احذف أي margin-left */
+  margin: 0;
+}
+.tool:hover{
+  background: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(0,0,0,.08);
+}
+
+.tool:active{
+  transform: scale(.96);
+}
+ 
+.tool:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.10);
+  background: #ffffff;
+}
+
+.tool:active{
+  transform: scale(.96);
+}
+
+/* ===== أيقونات ===== */
+.tool svg{
+  width: 22px;
+  height: 22px;
+}
+
+/* ===== Inputs داخل الأدوات ===== */
+.tool input[type="color"]{
+  width: 24px;
+  height: 24px;
+  border: none;
+  padding: 0;
+  background: transparent;
+}
+
+.tool input[type="range"]{
+  width: 38px;                 /* بدل ما يوسع الأداة */
+}
+
+/* زر داخل tool */
+.tool button{
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+}
+ 
+.tool-flyout{
+  position: fixed;   /* فوق كل شيء */
+  top: 0;
+  left: 0;
+
+   min-height: 100px;
+
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+
+  box-shadow: 0 20px 50px rgba(0,0,0,.15);
+
+  z-index: 9999;
+
+  display: none;
+  flex-direction: column;
+       width: 52px;
+}
+
+.tool-flyout.active{
+  display: flex;
+}.flyout-header{
+  display:flex;
+  justify-content: space-between;
+  align-items:center;
+
+  padding:10px 14px;
+  border-bottom:1px solid #eee;
+  font-weight:600;
+}
+
+.flyout-close{
+  cursor:pointer;
+  font-size:18px;
+  opacity:.6;
+}
+
+.flyout-close:hover{
+  opacity:1;
+}.flyout-content{
+  padding:5px;
+  overflow-y:auto;
+}.tool-panel{
+  display:none;
+}
+#flyoutActions{
+  display: flex;
+  align-items: center;
+  gap: 10px;       /* مسافة بينهم */
+  flex-direction: row; /* أفقي */
+}
+/* جميع الـ panels مخفية */
+.tool-panel{ display:none; }
+
+/* panels العادية تظهر كـ block */
+.tool-panel.active{ display:block; }
+
+ 
+.tool-btn {
+    height: 34px;
+    width: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 0;
+    margin: 3px;
+}
+  .shape{
+  width: 100%;
+  height: 70px;
+
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+
+  padding: 6px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  cursor:pointer;
+  transition:.15s;
+}
+
+.shape:hover{
+  background:#fff;
+  transform:translateY(-2px);
+  box-shadow:0 6px 14px rgba(0,0,0,.08);
+}  .tool-panel::-webkit-scrollbar{
+  width:6px;
+}
+
+.tool-panel::-webkit-scrollbar-thumb{
+  background:#cbd5f5;
+  border-radius:10px;
+}.flyout-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+ 
+  padding:10px 14px;
+  border-bottom:1px solid #eee;
+}
+
+.flyout-tools{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.flyout-tools input[type="color"]{
+  width:28px;
+  height:28px;
+  border:none;
+  padding:0;
+}
+
+.flyout-tools input[type="range"]{
+  width:70px;
+}#flyoutActions .tool{
+  width: auto;
+  height: 34px;
+  padding: 4px 8px;
+  border-radius: 10px;
+}#flyoutActions input[type="range"]{
+  width: 68px;
+}
+
+
+.third-panel{
+  position: fixed;
+  top: 0;
+  left: 0;
+
+  width: 240px;
+  min-height: 120px;
+
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-radius:14px;
+
+  box-shadow:0 20px 50px rgba(0,0,0,.15);
+
+  z-index:10000;
+
+  display:none;
+  padding:12px;
+}
+
+ 
+
+
+.third-panel{
+  position: fixed;
+  top: 0;
+  left: 0;
+
+  width: 260px;
+  min-height: 120px;
+
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-radius:14px;
+
+  box-shadow:0 20px 50px rgba(0,0,0,.15);
+
+  z-index:10000;
+
+  display:none;
+}
+.third-panel.active{
+  display:flex;
+  flex-direction: column;
+}.third-panel .flyout-content{
+  padding:15px;
+  overflow-y:auto;
+  max-height:70vh;
+}.third-panel .shapes-panel{
+  display:grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap:12px;
+}/* ===== Scroll احترافي داخل thirdPanel ===== */
+.third-panel .flyout-content::-webkit-scrollbar{
+  width:6px;
+}
+
+.third-panel .flyout-content::-webkit-scrollbar-thumb{
+  background:#cbd5f5;
+  border-radius:10px;
+}.third-panel .flyout-content{
+  padding:15px;
+  overflow-y:auto;
+  max-height:75vh;
+  flex: 1;                 /* يأخذ كل المساحة المتبقية */
+  overflow-y: auto;
+  padding: 15px;
+
+  min-height: 0;           /* مهم داخل flex حتى يعمل السكرول */
+
+}.third-panel{
+  position: fixed;
+  top: 0;
+  left: 0;
+
+  width: 270px;
+  height: 82vh;
+
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-radius:16px;
+
+  box-shadow:0 25px 60px rgba(0,0,0,.18);
+
+  z-index:10000;
+
+  display:none;
+  flex-direction: column;
+}
+
+.third-panel.active{
+  display:flex;
+}.third-panel .flyout-header{
+  flex-shrink: 0;
+  padding:12px 14px;
+  border-bottom:1px solid #eee;
+  font-weight:600;
+}.third-panel .flyout-content{
+  flex:1;
+  overflow-y:auto;
+  padding:14px;
+
+  min-height:0;
+}.third-panel .flyout-content::-webkit-scrollbar{
+  width:7px;
+}
+
+.third-panel .flyout-content::-webkit-scrollbar-thumb{
+  background:rgba(148,163,184,.55);
+  border-radius:10px;
+}.shape{
+  width:100%;
+  height:74px;
+
+  background:#f8fafc;
+  border:1px solid #e5e7eb;
+  border-radius:12px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  cursor:pointer;
+  transition:all .16s ease;
+}
+
+.shape svg{
+  pointer-events:none;
+}.shape:hover{
+  background:#ffffff;
+  transform:translateY(-3px);
+  box-shadow:0 12px 26px rgba(0,0,0,.12);
+  border-color:#dbeafe;
+}
+
+.shape:active{
+  transform:scale(.96);
+}.third-panel {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 239px;
+   max-height: calc(100vh - 20px);background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, .18);
+    z-index: 10000;
+    display: none;
+    flex-direction: column;
+  }
+  #flyoutActions {
+    display: flex;
+    align-items: center;
+    gap: -36px;
+    flex-direction: row;
+    width: 183px;
+}.shapeto svg{
+  width:22px;
+  height:22px;
+  stroke:#334155;
+  transition:.2s;
+}
+
+.shapeto:hover svg{
+  stroke:#2563eb;
+}.toolswitch {
+    /* height: 38px; */
+    width: 106%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    cursor: pointer;
+    user-select: none;
+    transition: all .15s ease;
+    margin: 0;
+}
+
+.toolprent{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:2px;
+
+   border-radius:14px;
+
+  cursor:pointer;
+  transition:.18s ease;
+
+  color:#7c3aed;
+}
+ 
+.tool-icon{
+  width:40px;
+  height:40px;
+  border-radius:12px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  background:#f0ecf0;   /* مهم */
+  transition:.2s ease;
+
+  border:2px solid transparent; /* مهم جداً */
+}
+
+/* 🔥 hover فقط على مربع الأيقونة */
+ 
+
+/* 🔵 الحالة النشطة */
+.toolprent.active .tool-icon{
+  background:#ede9fe;
+}
+
+.tool-label{
+ font-size: 14px;
+    font-weight: bold;
+    color: #000000;
+    text-align: center;
+}
+
+.toolprent:hover .tool-icon{
+  background:linear-gradient(
+    145deg,
+    #e6fffb,
+    #ccfbf1
+  );
+  transform:translateY(-1px);
+} 
+#brushSize{
+  border-radius: 10PX;
+}
+
+
+/* ===== Brush Select Professional ===== */
+
+.tool-select {
+  padding: 0;
+  position: relative;
+}
+.brush-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  width: 100%;
+  height: 100%;
+
+  border: none;
+  outline: none;
+  background: transparent;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  text-align: center;
+
+  padding-right: 18px;   /* 🔥 مسافة بين الرقم والسهم */
+  text-align: center;      /* توسيط الرقم */
+  text-align-last: center;
+  cursor: pointer;
+  color: #0f172a;
+}
+
+/* سهم احترافي */
+.tool-select::after {
+  content: "";
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  border-right: 2px solid #64748b;
+  border-bottom: 2px solid #64748b;
+  transform: translateY(-60%) rotate(45deg);
+  pointer-events: none;
+}
+
+/* hover مطابق لأدواتك */
+.tool-select:hover {
+  background: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(0,0,0,.08);
+}
+
+/* focus احترافي */
+.brush-select:focus {
+  background: #ffffff;
+}
+
+/* القائمة المنسدلة نفسها */
+ .brush-select option {
+  text-align: center;   /* توسيط داخل القائمة */
+  font-weight: 600;
+  padding: 6px 0;
+}
+
+
+
+
+/* ===== غير نشط ===== */
+/* ===== الحالة العادية ===== */
+/* ===== الحالة العادية ===== */
+/* الحالة العادية */
+.toolprent{
+  color:#9ca3af;
+}
+
+.toolprent .tool-label{
+  color:#9ca3af;
+}
+
+.tool-icon{
+  background:#f1f5f9;
+  border-radius:12px;
+  transition:.25s ease;
+}
+
+/* الأيقونات تأخذ اللون من currentColor */
+.toolprent svg{
+  stroke:currentColor;
+  fill:currentColor;
+}
+
+/* ===== الحالة المفعلة ===== */
+
+.toolprent.active{
+  color:#7c3aed; /* بنفسجي مثل الصورة */
+ 
+}
+
+ 
+.toolprent.active .tool-icon{
+  background:#ede9fe;
+  box-shadow:0 6px 16px rgba(124,58,237,.25);
+    border:2px solid #22c55e; /* الإطار الأخضر */
+}
+ 
+/* اللون الأخضر عند التفعيل */
+/*   */
+.icon-green svg path,
+.icon-green svg rect,
+.icon-green svg circle,
+.icon-green svg line{
+  stroke:#22c55e !important;
+}
+/* خلفية الأيقونة */
+ 

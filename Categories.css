@@ -1,0 +1,387 @@
+/* ===============================
+   ROOT VARIABLES
+================================ */
+:root{
+  --bg:#f5f7fb;
+  --card:#ffffff;
+  --line:#e5e7eb;
+  --text:#111827;
+  --muted:#6b7280;
+  --blue:#3b82f6;
+  --blue2:#60a5fa;
+  --danger:#ef4444;
+  --ok:#10b981;
+  --shadow: 0 10px 24px rgba(0,0,0,.08);
+  --radius: 14px;
+
+  /* مقاسات مربعات الصور */
+  --shape-question: 140px;
+  --shape-option: 110px;
+}
+
+*{ box-sizing:border-box }
+
+/* ===============================
+   WRAPPER
+================================ */
+.wrap{
+   width: 100%;
+  margin: 22px auto;
+  padding: 0 14px;
+}
+
+/* ===============================
+   HEADER (إضافة سؤال)
+================================ */
+.header{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 14px;
+
+  display:flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.field{
+  flex: 1 1 360px;
+}
+
+.field input{
+  width:100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border:1px solid var(--line);
+  outline:none;
+  font-size: 15px;
+  background:#fff;
+}
+
+.field input:focus{
+  border-color:#cbd5e1;
+  box-shadow: 0 0 0 4px rgba(59,130,246,.12);
+}
+
+/* ===============================
+   BUTTONS
+================================ */
+ 
+.btn:hover{ transform: translateY(-1px); }
+.btn:active{ transform: translateY(0); }
+
+.btn-blue{ background: var(--blue); }
+.btn-danger{ background: var(--danger); }
+
+.btn-ghost{
+  background:#fff;
+  color:#111827;
+  border:1px solid var(--line);
+  box-shadow:none;
+}
+
+/* ===============================
+   SHAPE BOX (قاعدة عامة)
+================================ */
+.shape-box,
+.opt-box{
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: rgba(59,130,246,.14);
+  border: 2px dashed rgba(59,130,246,.65);
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  overflow:hidden;
+  user-select:none;
+  color:#1f3a8a;
+  font-weight:700;
+  font-size: 12px;
+}
+
+/* مربع صورة السؤال */
+.shape-box{
+  width: var(--shape-question);
+  height: var(--shape-question);
+}
+
+/* مربع صورة الخيار */
+.opt-box{
+  width: var(--shape-option);
+  height: var(--shape-option);
+}
+
+/* عرض القص داخل المربع */
+.shape-box canvas,
+.opt-box canvas{
+  width:100%;
+  height:100%;
+  object-fit: contain;
+  display:block;
+  border-radius: 6px;
+}
+
+/* ===============================
+   SELECTED / ATTACH TARGET
+================================ */
+.is-attach-target{
+  outline: 2px solid #2d8cff;
+  background: rgba(59,130,246,.18);
+  box-shadow: 0 0 0 4px rgba(59,130,246,.15);
+}
+
+/* ===============================
+   QUESTION CARD
+================================ */
+.q-card{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 14px;
+}
+
+/* رأس السؤال */
+.q-top{
+  display:grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.q-title{
+  display:flex;
+  gap: 10px;
+  align-items:center;
+}
+
+.q-index{
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background:#111827;
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:800;
+}
+
+.q-text{
+  font-weight:800;
+  font-size: 15px;
+}
+
+.q-actions{
+  display:flex;
+  gap: 10px;
+  align-items:center;
+}
+
+/* ===============================
+   OPTIONS TREE
+================================ */
+.subtree{
+  margin-top: 12px;
+  border-top: 1px dashed var(--line);
+  padding-top: 12px;
+
+  display:flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* صف الخيار */
+.opt-row{
+  display:grid;
+  grid-template-columns: auto 1fr auto auto;
+  gap: 10px;
+  align-items:center;
+
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: #fbfdff;
+}
+
+/* نص الخيار */
+.opt-input{
+  width:100%;
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border:1px solid var(--line);
+  outline:none;
+  font-size: 14px;
+  background:#fff;
+}
+
+/* checkbox */
+.opt-check{
+  display:flex;
+  align-items:center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border:1px solid var(--line);
+  background:#fff;
+  font-weight: 700;
+}
+
+.opt-check input{
+  width: 18px;
+  height: 18px;
+  accent-color: var(--ok);
+}
+
+/* ===============================
+   MUTED TEXT
+================================ */
+.muted{
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 6px;
+}
+
+/* ===============================
+   RESPONSIVE (MOBILE)
+================================ */
+@media (max-width: 720px){
+
+  .q-top{
+    grid-template-columns: 1fr;
+  }
+
+  .opt-row{
+    grid-template-columns: 1fr;
+  }
+
+  .shape-box,
+  .opt-box{
+    width: 100%;
+    height: 160px;
+  }
+
+  .q-actions{
+    justify-content: flex-start;
+  }
+}
+/* إخفاء محتوى السؤال */
+.q-card.collapsed .subtree {
+  display: none;
+}
+
+/* تأثير بصري عند الإخفاء */
+.q-card.collapsed {
+  opacity: 0.92;
+}
+
+/* زر الإظهار / الإخفاء */
+.q-card.collapsed .subtree {
+  display: none;
+}
+
+.q-card.collapsed .q-text {
+  opacity: 0.5;
+}
+ .q-card .subtree {
+  max-height: 2000px;        /* رقم كبير يكفي المحتوى */
+  overflow: hidden;
+  transition: 
+    max-height 0.35s ease,
+    opacity 0.25s ease,
+    transform 0.25s ease;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.q-card.collapsed .subtree {
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-4px);
+}
+.q-card.collapsed .q-text {
+  opacity: 0.8;
+}
+.delOpt{
+  border: none;
+  margin-top: -3px   ;
+}
+#qInputCatogeres {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+} 
+.q-card {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.q-text {
+  font-weight: 800;
+  font-size: 15px;
+
+  /* 🔥 أهم 3 أسطر */
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  white-space: normal;
+
+  max-width: 100%;
+}
+.q-title > div {
+  min-width: 0;   /* 🔥 هذا السطر أساسي */
+  max-width: 100%;
+}
+.q-top {
+  display: flex;
+  flex-wrap: wrap;   /* مهم */
+  width: 100%;
+}
+textarea {
+  width: 100%;
+  min-height: 56px;       /* الارتفاع الابتدائي */
+  max-height: 180px;      /* أقصى ارتفاع */
+  
+  resize: none;           /* ❌ منع السحب بالماوس */
+  overflow-y: auto;       /* يظهر Scroll بعد الحد */
+  
+  box-sizing: border-box;
+  
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.6;
+
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+}
+#treeCatogeris{
+  width: 100%;
+}.addQuestionCatogeresBtn
+    {
+    --btn-bg: #1f2937;
+    /* --btn-ink: #3d0000; */
+    --btn-bd: transparent;
+    --btn-shadow: 0 6px 16px rgba(0, 0, 0, .18);
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .6ch;
+    padding: 12px 18px;
+    min-width: 160px;
+    border-radius: 12px;
+    border: 1px solid var(--btn-bd);
+    background: linear-gradient(160deg, #d1d5db 0%, #ffffff 30%, #bfc5cc 50%, #ffffff 70%, #a8b0b9 100%);
+    color: var(--btn-ink);
+    font-weight: 700;
+    letter-spacing: .2px;
+    text-decoration: none;
+    cursor: pointer;
+    box-shadow: var(--btn-shadow);
+    transition: transform .22s ease, box-shadow .22s ease, background .22s ease, color .22s ease, border-color .22s ease, filter .22s ease;
+}

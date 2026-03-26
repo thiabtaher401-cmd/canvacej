@@ -1,0 +1,182 @@
+#modals {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.hidden {
+  display: none;
+}
+
+.modals-card {
+  background: #fff;
+  width: 380px;
+  max-width: 90%;
+  border-radius: 16px;
+  padding: 22px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+  animation: pop 0.2s ease-out;
+}
+
+@keyframes pop {
+  from { transform: scale(0.95); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+.modals-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.modals-icon {
+  font-size: 26px;
+}
+
+.modals-header h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.modals-text {
+  margin: 16px 0 22px;
+  font-size: 15px;
+  color: #374151;
+  line-height: 1.6;
+}
+
+.modals-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.modals-actions button {
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: none;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-cancel {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+.btn-cancel:hover {
+  background: #d1d5db;
+}
+
+.btn-danger {
+  background: #ef4444;
+  color: white;
+}
+
+.btn-danger:hover {
+  background: #dc2626;
+}
+
+
+.modals-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #111827;           /* أسود داكن أنيق */
+  text-align: center;
+  margin-bottom: 10px;
+  letter-spacing: 0.3px;
+}
+
+.modals-message {
+    font-size: 15.5px;
+    line-height: 1.7;
+    color: #374151;
+    text-align: center;
+    margin-bottom: 18px;
+    font-size: 20;
+    font-size: 20px;
+    line-height: 2.0;
+    margin-top: 24px;}
+.modals-title::after {
+  content: "";
+  display: block;
+  width: 50px;
+  height: 3px;
+  background: #ef4444;     /* أحمر تحذيري */
+  margin: 8px auto 0;
+  border-radius: 2px;
+}
+.modals.warning .modal-title::after {
+  background: #facc15; /* أصفر */
+}
+.modals.success .modal-title::after {
+  background: #22c55e; /* أخضر */
+}
+/* ===== MODAL CARD ===== */
+.modal-card{
+  background:#ffffff;
+  border-radius:16px;
+  padding:24px 28px;
+  min-width:320px;
+  max-width:420px;
+  box-shadow:
+    0 10px 30px rgba(0,0,0,.18);
+  text-align:center;
+  animation: modalPop .25s ease;
+}
+
+/* عنوان */
+.modals-title{
+  margin:0 0 10px;
+  font-size:18px;
+  font-weight:800;
+  color:#111;
+}
+
+/* نص */
+.modals-message{
+  margin:0 0 22px;
+  font-size:14px;
+  line-height:1.6;
+  color:#555;
+}
+
+/* أزرار */
+.modal-buttons{
+  display:flex;
+  gap:10px;
+  justify-content:center;
+}
+
+.btn-cancel{
+  padding:10px 18px;
+  border-radius:10px;
+  border:1px solid #ddd;
+  background:#f5f5f5;
+  cursor:pointer;
+}
+
+.btn-danger{
+  padding:10px 18px;
+  border-radius:10px;
+  border:none;
+  background:#ef4444;
+  color:#fff;
+  cursor:pointer;
+}
+
+/* حركة دخول */
+@keyframes modalPop{
+  from{
+    transform:scale(.9);
+    opacity:0;
+  }
+  to{
+    transform:scale(1);
+    opacity:1;
+  }
+}

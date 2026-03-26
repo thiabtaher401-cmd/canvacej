@@ -1,0 +1,72 @@
+ .editor-box {
+      background: #fff;
+      border-radius: 10px;
+      padding: 16px;
+      max-width: 900px;
+      margin: auto;
+      box-shadow: 0 10px 20px rgba(0,0,0,.08);
+    }
+
+    .editor-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    math-field {
+      min-height: 60px;
+      width: 100%;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 22px;
+      background: #fafafa;
+      direction: rtl;
+    }
+
+    math-field:focus-within {
+      border-color: #2563eb;
+      background: #fff;
+    }
+
+    .toolbar {
+      display: none;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+      background: #f9fafb;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #e5e7eb;
+    }
+
+    .toolbar button {
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid #d1d5db;
+      background: white;
+      cursor: pointer;
+      font-size: 16px;
+      min-width: 40px;
+    }
+
+    .toolbar button:hover {
+      background: #2563eb;
+      color: white;
+    }
+
+    .actions {
+      margin-top: 16px;
+      display: flex;
+      gap: 10px;
+    }
+
+    pre {
+      background: #111827;
+      color: #e5e7eb;
+      padding: 10px;
+      border-radius: 6px;
+      margin-top: 10px;
+      direction: ltr;
+    }

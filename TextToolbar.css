@@ -1,0 +1,125 @@
+ 
+.hidden { display: none; }
+/* الحاوية الرئيسية */
+.text-toolbar {
+  position: fixed;
+ top: 32%;  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  padding: 8px 12px;
+  background: #ffffff;
+  border-radius: 12px;
+
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.12),
+    0 1px 3px rgba(0, 0, 0, 0.08);
+   z-index: 10000;
+  user-select: none;
+}
+ 
+
+/* مجموعات الأدوات */
+.tool-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* select */
+.tool-select {
+  appearance: none;
+  -webkit-appearance: none;
+
+  height: 34px;
+  padding: 0 28px 0 10px;
+
+  font-size: 14px;
+  font-family: inherit;
+
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  background: #f9fafb;
+
+  cursor: pointer;
+  outline: none;
+}
+
+.tool-select.small {
+  width: 70px;
+  text-align: center;
+}
+
+/* سهم صغير للـ select */
+.tool-select {
+  background-image:
+    linear-gradient(45deg, transparent 50%, #6b7280 50%),
+    linear-gradient(135deg, #6b7280 50%, transparent 50%);
+  background-position:
+    calc(100% - 16px) 14px,
+    calc(100% - 10px) 14px;
+  background-size: 6px 6px;
+  background-repeat: no-repeat;
+}
+
+/* أزرار */
+.tool-btn {
+  height: 34px;
+  min-width: 34px;
+
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+
+  background: #f9fafb;
+  color: #111827;
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+  outline: none;
+}
+
+.tool-btn.bold {
+  font-weight: 800;
+}
+
+.tool-btn.italic {
+  font-style: italic;
+}
+
+/* حالة التفعيل */
+.tool-btn.active {
+  background: #2563eb;
+  color: #ffffff;
+  border-color: #2563eb;
+}
+
+/* hover */
+.tool-btn:hover,
+.tool-select:hover {
+  background: #eef2ff;
+}
+
+/* color picker */
+.color-wrapper {
+  display: flex;
+  align-items: center;
+}
+
+.color-wrapper input[type="color"] {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  cursor: pointer;
+}
+
+/* إخفاء الشريط عند الحاجة */
+.text-toolbar.hidden {
+  display: none;
+}
